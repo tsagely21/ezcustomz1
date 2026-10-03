@@ -18,10 +18,13 @@ button{cursor:pointer;font-weight:600}button:disabled{opacity:.5;cursor:wait}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
 .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .when{font-weight:700;font-size:18px}.tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
-.tag.approved{color:var(--ok);border-color:var(--ok)}.tag.declined{color:var(--err);border-color:var(--err)}
+.tag.approved{color:var(--ok);border-color:var(--ok)}.tag.declined,.tag.cancelled{color:var(--err);border-color:var(--err)}
 dl{display:grid;grid-template-columns:90px 1fr;gap:4px 12px;margin:12px 0}dt{color:var(--mute)}dd{margin:0;word-break:break-word}
 pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 12px;font:13px/1.5 ui-monospace,Menlo,monospace}
 .acts{display:flex;gap:10px}.acts button{flex:1}.acc{background:var(--ok);border-color:var(--ok);color:#fff}.dec{color:var(--err);border-color:var(--err)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.tabs button{flex:1;min-width:120px}
+.tabs button[aria-selected=true]{background:var(--vio);border-color:var(--vio);color:#fff}
+.cnl{color:#e0a030;border-color:#e0a030}.note{color:var(--mute);font-size:14px;margin:0 0 12px}
 .msg{color:var(--err);min-height:1.4em;margin:6px 0}.empty{color:var(--mute);text-align:center;padding:40px 0}
 </style>
 </head>
@@ -37,11 +40,13 @@ pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);borde
   <section id="app" hidden>
     <header>
       <h1>Bookings</h1>
-      <div>
-        <select id="flt"><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option></select>
-        <button id="rf">Refresh</button> <button id="out">Sign out</button>
-      </div>
+      <div><button id="rf">Refresh</button> <button id="out">Sign out</button></div>
     </header>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-t="pending" aria-selected="true">Pending</button>
+      <button role="tab" data-t="approved" aria-selected="false">Review confirmed</button>
+      <button role="tab" data-t="closed" aria-selected="false">Declined / cancelled</button>
+    </div>
     <div class="msg" id="am" role="alert"></div>
     <div id="list"></div>
   </section>
@@ -53,7 +58,7 @@ const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
 /* ============================================================================================================================== */
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let token=sessionStorage.getItem('ezt')||'';
-const ERR={slot_taken:'That day is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.'};
+const ERR={slot_taken:'That day is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_approved:'That booking is no longer confirmed. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.'};
 async function api(path,opt={}){
   const r=await fetch(SUPABASE_URL+path,{...opt,headers:{apikey:SUPABASE_ANON_KEY,...(token?{Authorization:'Bearer '+token}:{}),'Content-Type':'application/json',...(opt.headers||{})}});
   const j=await r.json().catch(()=>null);
@@ -67,23 +72,32 @@ $('login').onsubmit=async e=>{e.preventDefault();$('lm').textContent='';
   try{const j=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:$('em').value.trim(),password:$('pw').value})});
     token=j.access_token;sessionStorage.setItem('ezt',token);$('pw').value='';show(true);load()}
   catch(x){$('lm').textContent=/invalid/i.test(x.message)?'Wrong email or password.':x.message}};
-$('out').onclick=signOut;$('rf').onclick=load;$('flt').onchange=load;
+let tab='pending';
+const Q={pending:'status=eq.pending',approved:'status=eq.approved',closed:'status=in.(declined,cancelled)'};
+document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;tab=b.dataset.t;
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));load()};
+$('out').onclick=signOut;$('rf').onclick=load;
 const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 async function load(){
-  $('am').textContent='';const st=$('flt').value;
-  try{const rows=await api(`/rest/v1/bookings?status=eq.${st}&order=slot_date.asc,created_at.asc`);
+  $('am').textContent='';
+  try{const rows=await api(`/rest/v1/bookings?${Q[tab]}&order=slot_date.asc,created_at.asc`);
     $('list').innerHTML=rows.length?rows.map(b=>`
     <article class="card">
       <div class="top"><div class="when">${esc(fmtD(b.slot_date))}</div><span class="tag ${b.status}">${b.status}</span></div>
       <dl><dt>Name</dt><dd>${esc(b.name)}</dd><dt>Phone</dt><dd><a href="tel:${esc(b.phone)}" style="color:inherit">${esc(b.phone)}</a></dd>
       <dt>Email</dt><dd><a href="mailto:${esc(b.email)}" style="color:inherit">${esc(b.email)}</a></dd><dt>Service</dt><dd>${esc(b.service)}</dd></dl>
       <pre>${esc(b.selections)}</pre>
-      ${b.status==='pending'?`<div class="acts"><button class="acc" data-a="approve_booking" data-id="${b.id}">Accept</button><button class="dec" data-a="decline_booking" data-id="${b.id}">Decline</button></div>`:''}
-    </article>`).join(''):`<div class="empty">No ${st} bookings.</div>`}
+      ${b.status==='pending'?`<div class="acts"><button class="acc" data-a="approve_booking" data-id="${b.id}">Accept</button><button class="dec" data-a="decline_booking" data-id="${b.id}">Decline</button></div>`
+       :b.status==='approved'?`<div class="acts"><button class="cnl" data-a="cancel_booking" data-id="${b.id}">Cancel booking</button><button class="dec" data-a="delete_booking" data-id="${b.id}">Delete</button></div>`
+       :`<div class="acts"><button class="dec" data-a="delete_booking" data-id="${b.id}">Delete</button></div>`}
+    </article>`).join(''):`<div class="empty">Nothing here.</div>`}
   catch(x){$('am').textContent=x.message}
 }
 $('list').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;
-  if(b.dataset.a==='approve_booking'&&!confirm('Accept this booking? The whole day will be blocked on the public calendar.'))return;
+  const ask={approve_booking:'Accept this booking? The whole day will be blocked on the public calendar.',
+    cancel_booking:'Cancel this confirmed booking? The record is kept, and the day opens up again on the public calendar.',
+    delete_booking:'Permanently delete this booking? This cannot be undone. If it was confirmed, the day opens up again on the public calendar.'}[b.dataset.a];
+  if(ask&&!confirm(ask))return;
   b.disabled=true;let err='';
   try{await api('/rest/v1/rpc/'+b.dataset.a,{method:'POST',body:JSON.stringify({p_id:b.dataset.id})})}catch(x){err=x.message}
   await load();if(err)$('am').textContent=err};
