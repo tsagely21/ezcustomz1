@@ -7,9 +7,9 @@
 <meta name="description" content="Request a custom starlight headliner or speaker install quote from EZ CUSTOMZ in Baton Rouge, Louisiana.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;600;700&display=swap">
 <style>
-:root{--bg:#f6f3fb;--card:#fff;--ink:#1a1428;--mute:#6b6478;--line:#e3dded;--vio:#8f4fe0;--vio-d:#6d33b8;--soft:#f0e8fb;--night:#0f0a20;--star:#f3ecff;--head:'Unbounded','Arial Black',system-ui,sans-serif;--body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151025;--card:#1e1736;--ink:#f1ecfa;--mute:#a79fb8;--line:#33294f;--soft:#2a1f47;--vio:#a46af0;--vio-d:#b98af5}}
-:root[data-theme="dark"]{--bg:#151025;--card:#1e1736;--ink:#f1ecfa;--mute:#a79fb8;--line:#33294f;--soft:#2a1f47;--vio:#a46af0;--vio-d:#b98af5}
+:root{--bg:#f6f3fb;--card:#fff;--ink:#1a1428;--mute:#6b6478;--line:#e3dded;--vio:#8f4fe0;--vio-d:#6d33b8;--err:#c62828;--soft:#f0e8fb;--night:#0f0a20;--star:#f3ecff;--head:'Unbounded','Arial Black',system-ui,sans-serif;--body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151025;--card:#1e1736;--ink:#f1ecfa;--mute:#a79fb8;--line:#33294f;--soft:#2a1f47;--vio:#a46af0;--vio-d:#b98af5;--err:#ff8a8a}}
+:root[data-theme="dark"]{--bg:#151025;--card:#1e1736;--ink:#f1ecfa;--mute:#a79fb8;--line:#33294f;--soft:#2a1f47;--vio:#a46af0;--vio-d:#b98af5;--err:#ff8a8a}
 html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body)}
@@ -51,12 +51,15 @@ select:disabled,input:disabled{opacity:.5}
 .type input{position:absolute;opacity:0;inset:0;min-height:0;cursor:pointer}
 .type b{display:block}.type span{font-size:13px;color:var(--mute)}
 .type:has(input:checked){border-color:var(--vio);background:var(--soft);box-shadow:inset 0 0 0 1px var(--vio)}
+.type:has(input:checked)::after{content:'\2713';position:absolute;top:10px;right:12px;color:var(--vio);font-weight:700}
 .type:has(input:focus-visible){outline:3px solid var(--vio)}
 .group{margin-top:18px;padding:18px;background:var(--soft);border-radius:10px}
 .group h3{margin:0 0 12px;font:600 16px var(--body)}
 .check{display:flex;gap:10px;align-items:center;margin-top:14px;font-weight:600;font-size:14px}
 .check input{width:20px;height:20px;min-height:0}
 .note{font-size:14px;color:var(--mute);margin:14px 0 0}
+.err{background:color-mix(in srgb,var(--err) 12%,transparent);color:var(--err);border:1px solid var(--err);border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:14px;font-weight:600}
+.bad{border-color:var(--err)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--err) 30%,transparent)}
 [hidden]{display:none!important}
 .go{display:flex;gap:16px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px}
 .go p{margin:0;font-size:13px;color:var(--mute)}
@@ -82,6 +85,7 @@ aside h3{margin:0;font:600 14px var(--body);color:#b9aed1}
 .ig{background:var(--night);color:#fff;padding:44px clamp(18px,6vw,90px);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
 .ig h2{margin:0;font-size:clamp(24px,3.4vw,36px)}
 .ig a{color:#dcc6f7;font-weight:600}
+footer a{color:#c9bbe0;font-weight:600}
 footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6vw,64px);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .cal-wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
 .cal{width:100%;max-width:360px;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg)}
@@ -95,6 +99,11 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
 .day:hover:not(:disabled){background:var(--soft)}
 .day:disabled{opacity:.3;cursor:not-allowed}
 .day.sel{background:var(--vio);color:#fff}
+.slots{margin-top:16px}.slots h4{margin:0 0 8px;font:700 14px var(--body)}
+.slotg{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.slot{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);padding:10px 6px;font:600 14px var(--body);cursor:pointer}
+.slot:disabled{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+.slot.sel{background:var(--vio);border-color:var(--vio);color:#fff}
 .pick{flex:1;min-width:220px;background:var(--soft);border-radius:12px;padding:18px}
 .pick small{color:var(--mute);font-size:13px}
 .pick b{display:block;font:600 20px/1.25 var(--head);letter-spacing:-.03em;margin:6px 0 12px}
@@ -142,11 +151,11 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
 
       <fieldset>
         <legend>What are we building?</legend>
-        <p class="sub">Choose your install to see the options.</p>
+        <p class="sub">Choose everything you'd like done. You can pick more than one.</p>
         <div class="types">
-          <label class="type"><input type="radio" name="project_type" value="Starlight headliner" required><b>Starlights</b><span>Turn your ceiling into a night sky</span></label>
-          <label class="type"><input type="radio" name="project_type" value="Speaker box / rack"><b>Speaker box or rack</b><span>Custom-fitted audio builds</span></label>
-          <label class="type"><input type="radio" name="project_type" value="Both"><b>Both</b><span>Full custom interior upgrade</span></label>
+          <label class="type"><input type="checkbox" name="project_type" value="Starlight headliner"><b>Starlights</b><span>Turn your ceiling into a night sky</span></label>
+          <label class="type"><input type="checkbox" name="project_type" value="Speaker box / rack"><b>Speaker box or rack</b><span>Custom-fitted audio builds</span></label>
+          <label class="type"><input type="checkbox" name="project_type" value="Ambient lighting"><b>Ambient lighting</b><span>Interior glow lighting: $300</span></label>
         </div>
 
         <div class="group" id="sl" hidden>
@@ -171,6 +180,7 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
               <option value="Shooting stars + suede wrap" data-p="500">Shooting stars + suede wrap: +$500</option></select></label>
             <label class="f">Sunroof<select id="sr" name="sunroof"><option value="" data-p="0">No sunroof</option><option value="Standard sunroof" data-p="100">Standard sunroof: +$100</option><option value="Panoramic sunroof" data-p="150">Panoramic sunroof: +$150</option></select></label>
           </div>
+          <label class="f" style="margin-top:14px">Will you be supplying your own starlight kit? <span class="opt">Bring your own and save $50</span><select id="own" name="own_starlight_kit"><option value="" data-d="0">Choose one</option><option value="Customer supplies kit ($50 off)" data-d="50">Yes, I'll supply my own kit: $50 off</option><option value="Needs kit supplied" data-d="0">No, I need a kit supplied</option></select></label>
           <label class="check"><input type="checkbox" id="logo" name="custom_logo" value="Yes" data-p="100"> Custom logo: +$100</label>
         </div>
 
@@ -188,7 +198,7 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
 
       <fieldset>
         <legend>What day would work best for you?</legend>
-        <p class="sub">Pick a preferred date and we'll confirm availability when we follow up. This is optional.</p>
+        <p class="sub">Pick a date, then a time. Grayed-out times are already booked. We'll confirm your request when we follow up.</p>
         <div class="cal-wrap">
           <div class="cal">
             <div class="cal-head"><button type="button" class="cn" id="cp" aria-label="Previous month">&lsaquo;</button><b id="cm" aria-live="polite"></b><button type="button" class="cn" id="cx" aria-label="Next month">&rsaquo;</button></div>
@@ -197,6 +207,7 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
           </div>
           <div class="pick"><small>Your preferred day</small><b id="pk">No date selected yet</b><button type="button" id="clr" hidden>Clear date</button></div>
         </div>
+        <div class="slots" id="tm" hidden><h4>Pick a time</h4><div class="slotg" id="tg"></div></div>
       </fieldset>
 
       <fieldset>
@@ -204,16 +215,18 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
         <p class="sub">We'll be in touch to talk through your build.</p>
         <div class="row two">
           <label class="f wide">Preferred date <span class="opt">filled in from the calendar above</span><input id="pd" name="preferred_date" readonly placeholder="Pick a day on the calendar above"></label>
+          <label class="f wide">Preferred time <span class="opt">filled in from the times above</span><input id="ptm" name="preferred_time" readonly placeholder="Pick a time above"></label>
           <label class="f">Your name<input id="nm" name="full_name" autocomplete="name" placeholder="First and last name" required></label>
           <label class="f">Phone number<input id="ph" name="phone" type="tel" autocomplete="tel" placeholder="(225) 555-0123" required></label>
-          <label class="f wide">Email address <span class="opt">optional</span><input id="em" name="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
-          <label class="f wide">Anything else we should know? <span class="opt">optional</span><textarea id="nt" name="notes" rows="4" placeholder="Style ideas, timing, questions..."></textarea></label>
+          <label class="f wide">Email address <input id="em" required name="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+          <label class="f wide">Anything else we should know? <textarea id="nt" required name="notes" rows="4" placeholder="Style ideas, timing, questions..."></textarea></label>
         </div>
       </fieldset>
 
+      <p class="err" id="err" role="alert" hidden></p>
       <div class="go">
         <button class="btn" type="submit">Request my quote</button>
-        <p>This requests a quote only. No obligation, we'll review and follow up.</p>
+        <p>All fields are required. This requests a quote only. No obligation, we'll review and follow up.</p>
       </div>
     </form>
 
@@ -236,10 +249,10 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
       <h3>Your estimate</h3>
       <div class="amt" id="amt">&mdash;</div>
       <p class="help" id="help">Select a starlight package to see your estimate.</p>
-      <div class="ln"><span>Starlight package</span><b id="pl">Not selected</b></div>
+      <div class="ln"><span>Services</span><b id="pl">Not selected</b></div>
       <div class="ln"><span>Selected options</span><b id="ol">&mdash;</b></div>
       <p class="fine">Final pricing is subject to review. Vehicle condition and configuration can affect the final quote.</p>
-      <div class="dep"><b>$150 down to schedule</b><span>Deposit is for scheduling after your quote is reviewed.</span></div>
+      <div class="dep"><b id="dep">$150 down to schedule</b><span id="dept">$150 per service selected. Your deposit comes out of your total cost and is for scheduling after your quote is reviewed.</span></div>
       <div class="reach">Questions? Talk to a real person.
         <a href="tel:2256154554">225.615.4554</a>
         <a href="mailto:hunteraucoin12@gmail.com">hunteraucoin12@gmail.com</a></div>
@@ -252,7 +265,7 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
   <h2>Let's make your interior unforgettable.</h2>
   <a href="https://www.instagram.com/ezcustomz4" target="_blank" rel="noopener noreferrer">Follow the builds @ezcustomz4</a>
 </section>
-<footer><span>&copy; 2026 EZ CUSTOMZ, Baton Rouge, Louisiana</span><span>Custom installs, built around you.</span></footer>
+<footer><span>&copy; 2026 EZ CUSTOMZ, Baton Rouge, Louisiana</span><span>Custom installs, built around you.</span><a href="https://www.tiktok.com/@two_ot_hunna" target="_blank" rel="noopener noreferrer">TikTok @two_ot_hunna</a></footer>
 
 <script>
 const FORMSPREE='https://formspree.io/f/mkjgaldv';
@@ -273,60 +286,100 @@ function rec(){
   sync();
 }
 
-const pt=()=>(document.querySelector('input[name=project_type]:checked')||{}).value||'';
+const picks=()=>[...document.querySelectorAll('input[name=project_type]:checked')].map(i=>i.value),has=v=>picks().includes(v);
 const P=s=>+(s.selectedOptions[0].dataset.p||0);
 function sync(){
-  const t=pt(),st=t==='Starlight headliner'||t==='Both',sp=t==='Speaker box / rack'||t==='Both';
+  const am=has('Ambient lighting'),st=has('Starlight headliner'),sp=has('Speaker box / rack');
   $('sl').hidden=!st;$('sp').hidden=!sp;
+  if(!st)$('own').value='';
   const k=$('sk').value;
   $('rkw').hidden=!(sp&&k==='Speaker rack');$('bxw').hidden=!(sp&&k==='Speaker box');
   $('otw').hidden=!(sp&&k==='Speaker box'&&$('bx').value==='Other');
   let tot=0,opt=[];
   if(st&&P($('pkg'))){
-    tot=P($('pkg'))+P($('up'))+P($('sr'))+($('logo').checked?100:0);
+    tot=P($('pkg'))+P($('up'))+P($('sr'))+($('logo').checked?100:0)-(+$('own').selectedOptions[0].dataset.d||0);
     if($('up').value)opt.push($('up').value);
     if($('sr').value)opt.push($('sr').value);
     if($('logo').checked)opt.push('Custom logo');
+    if($('own').selectedOptions[0].dataset.d==='50')opt.push('Own kit, $50 off');
   }
-  const q=sp&&!st,a=$('amt');
+  const sub=st&&tot?tot:0,amount=sub+(am?300:0),q=!amount&&sp,a=$('amt');
   a.classList.toggle('q',q);
-  a.innerHTML=st&&tot?'$'+tot.toLocaleString()+'<small>USD</small>':q?'Custom quote':'&mdash;';
-  $('help').textContent=st&&tot?'Estimated starlight package and selected options.':q?'Final pricing follows review of your speaker build.':'Select a starlight package to see your estimate.';
-  $('pl').textContent=st&&$('pkg').value?$('pkg').selectedOptions[0].textContent.replace(' (recommended)',''):q?'Custom quote':'Not selected';
-  $('ol').textContent=opt.length?opt.join(', '):st&&$('pkg').value?'Base package':'\u2014';
+  a.innerHTML=amount?'$'+amount.toLocaleString()+'<small>USD</small>':q?'Custom quote':'&mdash;';
+  const bits=[];if(st&&tot)bits.push('starlight package and options');if(am)bits.push('ambient lighting');
+  $('help').textContent=amount?'Estimated '+bits.join(' + ')+'.'+(sp?' Speaker build is quoted separately.':'')+(st&&!tot?' Select a starlight package to add it.':''):q?'Final pricing follows review of your speaker build.':'Select a starlight package to see your estimate.';
+  const it=[];if(st)it.push($('pkg').value?$('pkg').selectedOptions[0].textContent.replace(' (recommended)',''):'Starlights');if(am)it.push('Ambient lighting');if(sp)it.push('Speaker build');
+  $('pl').textContent=it.length?it.join(' + '):'Not selected';
+  $('ol').textContent=opt.length?opt.join(', '):st&&$('pkg').value?'Base package':'\u2014';  const n=svc();
+  $('dep').textContent='$'+(150*(n||1)).toLocaleString()+' down to schedule';
+  $('dept').textContent='$150 per service selected'+(n>1?' ('+n+' services)':'')+'. Your deposit comes out of your total cost and is for scheduling after your quote is reviewed.';
+}
+function svc(){
+  const u=$('up').value.toLowerCase();let n=picks().length;
+  if(has('Starlight headliner')){if(u.includes('shooting stars'))n++;if(u.includes('suede wrap'))n++}
+  return n;
 }
 document.querySelectorAll('#qf input,#qf select').forEach(e=>e.addEventListener('change',sync));
 sync();
 
+const NM={yr:'vehicle year',mk:'vehicle make',md:'vehicle model',pt:'at least one service',pkg:'star count',own:'starlight kit question',sk:'speaker rack or box',rk:'rack style',bx:'speaker box placement',ot:'placement details',pd:'preferred date',nm:'your name',ph:'a 10-digit phone number',em:'a valid email address',nt:'anything else we should know',tm:'a time'};
 function need(){
-  const miss=[];
-  if(!$('yr').value||!$('mk').value||!$('md').value)miss.push('yr');
-  if(!pt())miss.push('pt');
-  const st=pt()==='Starlight headliner'||pt()==='Both',sp=pt()==='Speaker box / rack'||pt()==='Both';
+  const miss=[],st=has('Starlight headliner'),sp=has('Speaker box / rack');
+  ['yr','mk','md'].forEach(i=>{if(!$(i).value)miss.push(i)});
+  if(!picks().length)miss.push('pt');
   if(st&&!$('pkg').value)miss.push('pkg');
+  if(st&&!$('own').value)miss.push('own');
   if(sp&&!$('sk').value)miss.push('sk');
   if(sp&&$('sk').value==='Speaker rack'&&!$('rk').value)miss.push('rk');
-  if(sp&&$('sk').value==='Speaker box'&&(!$('bx').value||($('bx').value==='Other'&&!$('ot').value.trim())))miss.push('bx');
+  if(sp&&$('sk').value==='Speaker box'){if(!$('bx').value)miss.push('bx');else if($('bx').value==='Other'&&!$('ot').value.trim())miss.push('ot')}
+  if(!$('pd').value)miss.push('pd');else if(!$('ptm').value)miss.push('tm');
   if(!$('nm').value.trim())miss.push('nm');
   if($('ph').value.replace(/\D/g,'').length<10)miss.push('ph');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('em').value.trim()))miss.push('em');
+  if(!$('nt').value.trim())miss.push('nt');
   return miss;
 }
+const holder=i=>i==='pt'?document.querySelector('.types'):i==='pd'?document.querySelector('.cal'):i==='tm'?$('tm'):$(i);
+function flag(m,go){
+  document.querySelectorAll('.bad').forEach(e=>e.classList.remove('bad'));
+  if(!m.length){$('err').hidden=true;return}
+  m.forEach(i=>holder(i).classList.add('bad'));
+  $('err').textContent='Please complete every field. Still needed: '+m.map(i=>NM[i]).join(', ')+'.';
+  $('err').hidden=false;
+  if(go){const f=holder(m[0]);f.scrollIntoView({block:'center',behavior:'smooth'});if(!['pt','pd','tm'].includes(m[0]))f.focus({preventScroll:true})}
+}
+const refresh=()=>{if(!$('err').hidden)flag(need(),false)};
+$('qf').addEventListener('input',refresh);$('qf').addEventListener('change',refresh);
 $('qf').addEventListener('submit',async e=>{
   e.preventDefault();
   const m=need();
-  if(m.length){const el=$(m[0])||document.querySelector('input[name=project_type]');el.focus();el.reportValidity&&el.reportValidity();alert('Please complete the highlighted details: vehicle, project type, options, your name and a 10-digit phone number.');return}
-  const L=['Quote request for EZ CUSTOMZ','Vehicle: '+$('yr').value+' '+$('mk').value+' '+$('md').value,'Project: '+pt()];
-  if(!$('sl').hidden){L.push('Starlights: '+$('pkg').value);if($('up').value)L.push('Upgrades: '+$('up').value);if($('sr').value)L.push($('sr').value);if($('logo').checked)L.push('Custom logo: yes');L.push('Estimate: '+$('amt').textContent.replace('USD',' USD'))}
+  if(m.length){flag(m,true);return}
+  const L=['Quote request for EZ CUSTOMZ','Vehicle: '+$('yr').value+' '+$('mk').value+' '+$('md').value,'Project: '+picks().join(' + ')];
+  if(!$('sl').hidden){L.push('Starlights: '+$('pkg').value);L.push('Starlight kit: '+$('own').value);if($('up').value)L.push('Upgrades: '+$('up').value);if($('sr').value)L.push($('sr').value);if($('logo').checked)L.push('Custom logo: yes');}
   if(!$('sp').hidden){L.push('Speakers: '+$('sk').value+(($('rk').value)?' ('+$('rk').value+')':'')+(($('bx').value)?' ('+($('bx').value==='Other'?$('ot').value.trim():$('bx').value)+')':''))}
-  if($('pd').value)L.push('Preferred date: '+$('pd').value);
+  if($('amt').textContent.length>1)L.push('Estimate: '+$('amt').textContent.replace('USD',' USD'));
+  L.push('Deposit to schedule: $'+150*(svc()||1)+' (comes out of total cost)');
+  L.push('Preferred date: '+$('pd').value);L.push('Preferred time: '+$('ptm').value);
   L.push('Name: '+$('nm').value.trim(),'Phone: '+$('ph').value.trim());
   if($('em').value.trim())L.push('Email: '+$('em').value.trim());
   if($('nt').value.trim())L.push('Notes: '+$('nt').value.trim());
   $('msg').value=L.join('\n');$('sum').value=$('msg').value;
   linkUp();
   const btn=e.submitter;if(btn)btn.disabled=true;
+  let booked=false;
+  if(SB_ON){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/create_booking_request',{method:'POST',headers:SB,body:JSON.stringify({p_date:iso(sel),p_time:selT.padStart(2,'0')+':00',p_name:$('nm').value,p_phone:$('ph').value,p_email:$('em').value,p_service:picks().join(' + '),p_selections:$('msg').value})});
+      if(r.ok)booked=true;else{
+        const j=await r.json().catch(()=>({})),c=j.message||'';
+        const t={slot_taken:'Sorry, that time was just booked. Please pick another time.',too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
+        if(t){if(btn)btn.disabled=false;$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});if(c==='slot_taken'){selT='';$('ptm').value='';await loadTaken()}return}
+      }
+    }catch(_){}
+  }
   let ok=false;
   try{const r=await fetch(FORMSPREE,{method:'POST',headers:{'Accept':'application/json'},body:new FormData($('qf'))});ok=r.ok}catch(_){}
+  ok=ok||booked;
   if(btn)btn.disabled=false;
   $('dh').textContent=ok?'Request received':"We couldn't send that just yet";
   $('dp').textContent=ok?"Thanks for reaching out to EZ CUSTOMZ. We'll be in touch to talk through your build.":'Send it to us by text or email instead, or call 225.615.4554.';
@@ -344,6 +397,28 @@ $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('msg').val
 
 /* calendar */
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'],now=new Date(),minD=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1),fmt={weekday:'long',month:'long',day:'numeric',year:'numeric'};
+/* ===== PASTE YOUR SUPABASE VALUES HERE (Project Settings > API). The anon key is public by design. NEVER paste the service_role key. ===== */
+const SUPABASE_URL='https://https://umvdxjnhzehcoujrishh.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
+/* ============================================================================================================================== */
+const SB_ON=!/YOUR-/.test(SUPABASE_URL+SUPABASE_ANON_KEY);
+const SB={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json'};
+const HOURS=[9,10,11,12,13,14,15,16,17],taken=new Set();let selT='';
+const hh=h=>(h%12||12)+':00 '+(h<12?'AM':'PM');
+const full=k=>HOURS.every(h=>taken.has(k+'T'+h));
+async function loadTaken(){
+  if(!SB_ON)return;
+  try{const f=iso(minD),t=iso(new Date(minD.getFullYear(),minD.getMonth(),minD.getDate()+120));
+    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/get_taken_slots',{method:'POST',headers:SB,body:JSON.stringify({from_date:f,to_date:t})});
+    if(!r.ok)return;taken.clear();(await r.json()).forEach(x=>taken.add(x.slot_date+'T'+ +x.slot_time.slice(0,2)));
+  }catch(_){}
+  cal();slots();
+}
+function slots(){
+  $('tm').hidden=!sel;if(!sel)return;
+  const k=iso(sel);
+  $('tg').innerHTML=HOURS.map(h=>`<button type="button" class="slot${selT===h+''?' sel':''}" data-h="${h}" ${taken.has(k+'T'+h)?'disabled':''} aria-pressed="${selT===h+''}">${hh(h)}</button>`).join('');
+}
 const BLOCKED=[]; // booked dates to grey out, like '2026-10-14'
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 let vy=minD.getFullYear(),vm=minD.getMonth(),sel=null;
@@ -351,17 +426,18 @@ function cal(){
   $('cm').textContent=MN[vm]+' '+vy;
   const first=new Date(vy,vm,1).getDay(),days=new Date(vy,vm+1,0).getDate();
   let h='';for(let i=0;i<first;i++)h+='<span></span>';
-  for(let d=1;d<=days;d++){const dt=new Date(vy,vm,d),off=dt<minD||BLOCKED.includes(iso(dt)),on=sel&&+sel===+dt;
+  for(let d=1;d<=days;d++){const dt=new Date(vy,vm,d),off=dt<minD||dt.getDay()===0||BLOCKED.includes(iso(dt))||full(iso(dt)),on=sel&&+sel===+dt;
     h+=`<button type="button" class="day${on?' sel':''}" data-d="${d}" ${off?'disabled':''} aria-pressed="${!!on}" aria-label="${dt.toLocaleDateString('en-US',fmt)}">${d}</button>`}
   $('cd').innerHTML=h;
   $('cp').disabled=vy===minD.getFullYear()&&vm===minD.getMonth();
 }
-function pick(){const t=sel?sel.toLocaleDateString('en-US',fmt):'';$('pd').value=t;$('pk').textContent=t||'No date selected yet';$('clr').hidden=!sel;cal()}
+function pick(){selT='';$('ptm').value='';const t=sel?sel.toLocaleDateString('en-US',fmt):'';$('pd').value=t;slots();$('pk').textContent=t||'No date selected yet';$('clr').hidden=!sel;cal();refresh()}
 $('cd').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b||b.disabled)return;sel=new Date(vy,vm,+b.dataset.d);pick()});
+$('tg').addEventListener('click',e=>{const b=e.target.closest('.slot');if(!b||b.disabled)return;selT=b.dataset.h;$('ptm').value=hh(+selT);slots();refresh()});
 $('cp').onclick=()=>{vm--;if(vm<0){vm=11;vy--}cal()};
 $('cx').onclick=()=>{vm++;if(vm>11){vm=0;vy++}cal()};
 $('clr').onclick=()=>{sel=null;pick()};
-cal();
+cal();loadTaken();
 
 /* starfield */
 const c=$('sky'),x=c.getContext('2d'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
