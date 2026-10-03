@@ -99,11 +99,6 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
 .day:hover:not(:disabled){background:var(--soft)}
 .day:disabled{opacity:.3;cursor:not-allowed}
 .day.sel{background:var(--vio);color:#fff}
-.slots{margin-top:16px}.slots h4{margin:0 0 8px;font:700 14px var(--body)}
-.slotg{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
-.slot{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);padding:10px 6px;font:600 14px var(--body);cursor:pointer}
-.slot:disabled{opacity:.3;cursor:not-allowed;text-decoration:line-through}
-.slot.sel{background:var(--vio);border-color:var(--vio);color:#fff}
 .pick{flex:1;min-width:220px;background:var(--soft);border-radius:12px;padding:18px}
 .pick small{color:var(--mute);font-size:13px}
 .pick b{display:block;font:600 20px/1.25 var(--head);letter-spacing:-.03em;margin:6px 0 12px}
@@ -198,7 +193,7 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
 
       <fieldset>
         <legend>What day would work best for you?</legend>
-        <p class="sub">Pick a date, then a time. Grayed-out times are already booked. We'll confirm your request when we follow up.</p>
+        <p class="sub">Pick the day you'd like. Grayed-out days are already booked. We'll confirm your request when we follow up.</p>
         <div class="cal-wrap">
           <div class="cal">
             <div class="cal-head"><button type="button" class="cn" id="cp" aria-label="Previous month">&lsaquo;</button><b id="cm" aria-live="polite"></b><button type="button" class="cn" id="cx" aria-label="Next month">&rsaquo;</button></div>
@@ -207,7 +202,6 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
           </div>
           <div class="pick"><small>Your preferred day</small><b id="pk">No date selected yet</b><button type="button" id="clr" hidden>Clear date</button></div>
         </div>
-        <div class="slots" id="tm" hidden><h4>Pick a time</h4><div class="slotg" id="tg"></div></div>
       </fieldset>
 
       <fieldset>
@@ -215,7 +209,6 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
         <p class="sub">We'll be in touch to talk through your build.</p>
         <div class="row two">
           <label class="f wide">Preferred date <span class="opt">filled in from the calendar above</span><input id="pd" name="preferred_date" readonly placeholder="Pick a day on the calendar above"></label>
-          <label class="f wide">Preferred time <span class="opt">filled in from the times above</span><input id="ptm" name="preferred_time" readonly placeholder="Pick a time above"></label>
           <label class="f">Your name<input id="nm" name="full_name" autocomplete="name" placeholder="First and last name" required></label>
           <label class="f">Phone number<input id="ph" name="phone" type="tel" autocomplete="tel" placeholder="(225) 555-0123" required></label>
           <label class="f wide">Email address <input id="em" required name="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
@@ -322,7 +315,7 @@ function svc(){
 document.querySelectorAll('#qf input,#qf select').forEach(e=>e.addEventListener('change',sync));
 sync();
 
-const NM={yr:'vehicle year',mk:'vehicle make',md:'vehicle model',pt:'at least one service',pkg:'star count',own:'starlight kit question',sk:'speaker rack or box',rk:'rack style',bx:'speaker box placement',ot:'placement details',pd:'preferred date',nm:'your name',ph:'a 10-digit phone number',em:'a valid email address',nt:'anything else we should know',tm:'a time'};
+const NM={yr:'vehicle year',mk:'vehicle make',md:'vehicle model',pt:'at least one service',pkg:'star count',own:'starlight kit question',sk:'speaker rack or box',rk:'rack style',bx:'speaker box placement',ot:'placement details',pd:'preferred date',nm:'your name',ph:'a 10-digit phone number',em:'a valid email address',nt:'anything else we should know'};
 function need(){
   const miss=[],st=has('Starlight headliner'),sp=has('Speaker box / rack');
   ['yr','mk','md'].forEach(i=>{if(!$(i).value)miss.push(i)});
@@ -332,21 +325,21 @@ function need(){
   if(sp&&!$('sk').value)miss.push('sk');
   if(sp&&$('sk').value==='Speaker rack'&&!$('rk').value)miss.push('rk');
   if(sp&&$('sk').value==='Speaker box'){if(!$('bx').value)miss.push('bx');else if($('bx').value==='Other'&&!$('ot').value.trim())miss.push('ot')}
-  if(!$('pd').value)miss.push('pd');else if(!$('ptm').value)miss.push('tm');
+  if(!$('pd').value)miss.push('pd');
   if(!$('nm').value.trim())miss.push('nm');
   if($('ph').value.replace(/\D/g,'').length<10)miss.push('ph');
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('em').value.trim()))miss.push('em');
   if(!$('nt').value.trim())miss.push('nt');
   return miss;
 }
-const holder=i=>i==='pt'?document.querySelector('.types'):i==='pd'?document.querySelector('.cal'):i==='tm'?$('tm'):$(i);
+const holder=i=>i==='pt'?document.querySelector('.types'):i==='pd'?document.querySelector('.cal'):$(i);
 function flag(m,go){
   document.querySelectorAll('.bad').forEach(e=>e.classList.remove('bad'));
   if(!m.length){$('err').hidden=true;return}
   m.forEach(i=>holder(i).classList.add('bad'));
   $('err').textContent='Please complete every field. Still needed: '+m.map(i=>NM[i]).join(', ')+'.';
   $('err').hidden=false;
-  if(go){const f=holder(m[0]);f.scrollIntoView({block:'center',behavior:'smooth'});if(!['pt','pd','tm'].includes(m[0]))f.focus({preventScroll:true})}
+  if(go){const f=holder(m[0]);f.scrollIntoView({block:'center',behavior:'smooth'});if(!['pt','pd'].includes(m[0]))f.focus({preventScroll:true})}
 }
 const refresh=()=>{if(!$('err').hidden)flag(need(),false)};
 $('qf').addEventListener('input',refresh);$('qf').addEventListener('change',refresh);
@@ -359,7 +352,7 @@ $('qf').addEventListener('submit',async e=>{
   if(!$('sp').hidden){L.push('Speakers: '+$('sk').value+(($('rk').value)?' ('+$('rk').value+')':'')+(($('bx').value)?' ('+($('bx').value==='Other'?$('ot').value.trim():$('bx').value)+')':''))}
   if($('amt').textContent.length>1)L.push('Estimate: '+$('amt').textContent.replace('USD',' USD'));
   L.push('Deposit to schedule: $'+150*(svc()||1)+' (comes out of total cost)');
-  L.push('Preferred date: '+$('pd').value);L.push('Preferred time: '+$('ptm').value);
+  L.push('Preferred date: '+$('pd').value);
   L.push('Name: '+$('nm').value.trim(),'Phone: '+$('ph').value.trim());
   if($('em').value.trim())L.push('Email: '+$('em').value.trim());
   if($('nt').value.trim())L.push('Notes: '+$('nt').value.trim());
@@ -369,11 +362,11 @@ $('qf').addEventListener('submit',async e=>{
   let booked=false;
   if(SB_ON){
     try{
-      const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/create_booking_request',{method:'POST',headers:SB,body:JSON.stringify({p_date:iso(sel),p_time:selT.padStart(2,'0')+':00',p_name:$('nm').value,p_phone:$('ph').value,p_email:$('em').value,p_service:picks().join(' + '),p_selections:$('msg').value})});
+      const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/create_booking_request',{method:'POST',headers:SB,body:JSON.stringify({p_date:iso(sel),p_name:$('nm').value,p_phone:$('ph').value,p_email:$('em').value,p_service:picks().join(' + '),p_selections:$('msg').value})});
       if(r.ok)booked=true;else{
         const j=await r.json().catch(()=>({})),c=j.message||'';
-        const t={slot_taken:'Sorry, that time was just booked. Please pick another time.',too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
-        if(t){if(btn)btn.disabled=false;$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});if(c==='slot_taken'){selT='';$('ptm').value='';await loadTaken()}return}
+        const t={slot_taken:'Sorry, that day was just booked. Please pick another day.',too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
+        if(t){if(btn)btn.disabled=false;if(c==='slot_taken'){sel=null;pick();await loadTaken()}$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});return}
       }
     }catch(_){}
   }
@@ -403,21 +396,14 @@ const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
 /* ============================================================================================================================== */
 const SB_ON=!/YOUR-/.test(SUPABASE_URL+SUPABASE_ANON_KEY);
 const SB={apikey:SUPABASE_ANON_KEY,'Content-Type':'application/json'};
-const HOURS=[9,10,11,12,13,14,15,16,17],taken=new Set();let selT='';
-const hh=h=>(h%12||12)+':00 '+(h<12?'AM':'PM');
-const full=k=>HOURS.every(h=>taken.has(k+'T'+h));
+const taken=new Set();
 async function loadTaken(){
   if(!SB_ON)return;
   try{const f=iso(minD),t=iso(new Date(minD.getFullYear(),minD.getMonth(),minD.getDate()+120));
-    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/get_taken_slots',{method:'POST',headers:SB,body:JSON.stringify({from_date:f,to_date:t})});
-    if(!r.ok)return;taken.clear();(await r.json()).forEach(x=>taken.add(x.slot_date+'T'+ +x.slot_time.slice(0,2)));
+    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/get_taken_days',{method:'POST',headers:SB,body:JSON.stringify({from_date:f,to_date:t})});
+    if(!r.ok)return;taken.clear();(await r.json()).forEach(x=>taken.add(x.slot_date));
   }catch(_){}
-  cal();slots();
-}
-function slots(){
-  $('tm').hidden=!sel;if(!sel)return;
-  const k=iso(sel);
-  $('tg').innerHTML=HOURS.map(h=>`<button type="button" class="slot${selT===h+''?' sel':''}" data-h="${h}" ${taken.has(k+'T'+h)?'disabled':''} aria-pressed="${selT===h+''}">${hh(h)}</button>`).join('');
+  cal();
 }
 const BLOCKED=[]; // booked dates to grey out, like '2026-10-14'
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -426,14 +412,13 @@ function cal(){
   $('cm').textContent=MN[vm]+' '+vy;
   const first=new Date(vy,vm,1).getDay(),days=new Date(vy,vm+1,0).getDate();
   let h='';for(let i=0;i<first;i++)h+='<span></span>';
-  for(let d=1;d<=days;d++){const dt=new Date(vy,vm,d),off=dt<minD||dt.getDay()===0||BLOCKED.includes(iso(dt))||full(iso(dt)),on=sel&&+sel===+dt;
+  for(let d=1;d<=days;d++){const dt=new Date(vy,vm,d),off=dt<minD||dt.getDay()===0||BLOCKED.includes(iso(dt))||taken.has(iso(dt)),on=sel&&+sel===+dt;
     h+=`<button type="button" class="day${on?' sel':''}" data-d="${d}" ${off?'disabled':''} aria-pressed="${!!on}" aria-label="${dt.toLocaleDateString('en-US',fmt)}">${d}</button>`}
   $('cd').innerHTML=h;
   $('cp').disabled=vy===minD.getFullYear()&&vm===minD.getMonth();
 }
-function pick(){selT='';$('ptm').value='';const t=sel?sel.toLocaleDateString('en-US',fmt):'';$('pd').value=t;slots();$('pk').textContent=t||'No date selected yet';$('clr').hidden=!sel;cal();refresh()}
+function pick(){const t=sel?sel.toLocaleDateString('en-US',fmt):'';$('pd').value=t;$('pk').textContent=t||'No date selected yet';$('clr').hidden=!sel;cal();refresh()}
 $('cd').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b||b.disabled)return;sel=new Date(vy,vm,+b.dataset.d);pick()});
-$('tg').addEventListener('click',e=>{const b=e.target.closest('.slot');if(!b||b.disabled)return;selT=b.dataset.h;$('ptm').value=hh(+selT);slots();refresh()});
 $('cp').onclick=()=>{vm--;if(vm<0){vm=11;vy--}cal()};
 $('cx').onclick=()=>{vm++;if(vm>11){vm=0;vy++}cal()};
 $('clr').onclick=()=>{sel=null;pick()};
