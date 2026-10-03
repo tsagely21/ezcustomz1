@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EZ CUSTOMZ Admin</title>
+<style>
+:root{--bg:#0d0a14;--card:#171224;--line:#2d2540;--ink:#f1ecfa;--mute:#a79cc0;--vio:#9b5de5;--ok:#2e9e5b;--err:#ff8a8a}
+@media(prefers-color-scheme:light){:root{--bg:#f6f3fb;--card:#fff;--line:#ddd3ee;--ink:#1c1530;--mute:#675c80;--err:#c62828}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:0}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+input,select,button{font:inherit;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
+button{cursor:pointer;font-weight:600}button:disabled{opacity:.5;cursor:wait}
+.login{max-width:360px;margin:12vh auto;display:grid;gap:10px}.login input{width:100%}
+.primary{background:var(--vio);border-color:var(--vio);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.when{font-weight:700;font-size:18px}.tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+.tag.approved{color:var(--ok);border-color:var(--ok)}.tag.declined{color:var(--err);border-color:var(--err)}
+dl{display:grid;grid-template-columns:90px 1fr;gap:4px 12px;margin:12px 0}dt{color:var(--mute)}dd{margin:0;word-break:break-word}
+pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 12px;font:13px/1.5 ui-monospace,Menlo,monospace}
+.acts{display:flex;gap:10px}.acts button{flex:1}.acc{background:var(--ok);border-color:var(--ok);color:#fff}.dec{color:var(--err);border-color:var(--err)}
+.msg{color:var(--err);min-height:1.4em;margin:6px 0}.empty{color:var(--mute);text-align:center;padding:40px 0}
+</style>
+</head>
+<body>
+<main>
+  <form class="login" id="login">
+    <h1>EZ CUSTOMZ Admin</h1>
+    <input id="em" type="email" placeholder="Admin email" autocomplete="username" required>
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password" required>
+    <button class="primary">Sign in</button>
+    <div class="msg" id="lm" role="alert"></div>
+  </form>
+  <section id="app" hidden>
+    <header>
+      <h1>Bookings</h1>
+      <div>
+        <select id="flt"><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option></select>
+        <button id="rf">Refresh</button> <button id="out">Sign out</button>
+      </div>
+    </header>
+    <div class="msg" id="am" role="alert"></div>
+    <div id="list"></div>
+  </section>
+</main>
+<script>
+/* ===== PASTE YOUR SUPABASE VALUES HERE (Project Settings > API). The anon key is public by design. NEVER paste the service_role key. ===== */
+const SUPABASE_URL='https://umvdxjnhzehcoujrishh.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
+/* ============================================================================================================================== */
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let token=sessionStorage.getItem('ezt')||'';
+const ERR={slot_taken:'That time is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.'};
+async function api(path,opt={}){
+  const r=await fetch(SUPABASE_URL+path,{...opt,headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+(token||SUPABASE_ANON_KEY),'Content-Type':'application/json',...(opt.headers||{})}});
+  const j=await r.json().catch(()=>null);
+  if(r.status===401||(j&&j.code==='PGRST303')){signOut();throw new Error('Session expired. Please sign in again.')}
+  if(!r.ok){const m=(j&&(j.message||j.msg||j.error_description))||'Request failed';throw new Error(ERR[m]||m)}
+  return j;
+}
+function show(on){$('login').hidden=on;$('app').hidden=!on}
+function signOut(){token='';sessionStorage.removeItem('ezt');show(false)}
+$('login').onsubmit=async e=>{e.preventDefault();$('lm').textContent='';
+  try{const j=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:$('em').value.trim(),password:$('pw').value})});
+    token=j.access_token;sessionStorage.setItem('ezt',token);$('pw').value='';show(true);load()}
+  catch(x){$('lm').textContent=/invalid/i.test(x.message)?'Wrong email or password.':x.message}};
+$('out').onclick=signOut;$('rf').onclick=load;$('flt').onchange=load;
+const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+const fmtT=t=>{const[h,m]=t.split(':');const H=+h;return(H%12||12)+':'+m+' '+(H<12?'AM':'PM')};
+async function load(){
+  $('am').textContent='';const st=$('flt').value;
+  try{const rows=await api(`/rest/v1/bookings?status=eq.${st}&order=slot_date.asc,slot_time.asc,created_at.asc`);
+    $('list').innerHTML=rows.length?rows.map(b=>`
+    <article class="card">
+      <div class="top"><div class="when">${esc(fmtD(b.slot_date))} &middot; ${esc(fmtT(b.slot_time))}</div><span class="tag ${b.status}">${b.status}</span></div>
+      <dl><dt>Name</dt><dd>${esc(b.name)}</dd><dt>Phone</dt><dd><a href="tel:${esc(b.phone)}" style="color:inherit">${esc(b.phone)}</a></dd>
+      <dt>Email</dt><dd><a href="mailto:${esc(b.email)}" style="color:inherit">${esc(b.email)}</a></dd><dt>Service</dt><dd>${esc(b.service)}</dd></dl>
+      <pre>${esc(b.selections)}</pre>
+      ${b.status==='pending'?`<div class="acts"><button class="acc" data-a="approve_booking" data-id="${b.id}">Accept</button><button class="dec" data-a="decline_booking" data-id="${b.id}">Decline</button></div>`:''}
+    </article>`).join(''):`<div class="empty">No ${st} bookings.</div>`}
+  catch(x){$('am').textContent=x.message}
+}
+$('list').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;
+  if(b.dataset.a==='approve_booking'&&!confirm('Accept this booking? That time will be blocked on the public calendar.'))return;
+  b.disabled=true;let err='';
+  try{await api('/rest/v1/rpc/'+b.dataset.a,{method:'POST',body:JSON.stringify({p_id:b.dataset.id})})}catch(x){err=x.message}
+  await load();if(err)$('am').textContent=err};
+if(token){show(true);load()}
+</script>
+</body>
+</html>
+
