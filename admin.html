@@ -53,7 +53,7 @@ const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
 /* ============================================================================================================================== */
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let token=sessionStorage.getItem('ezt')||'';
-const ERR={slot_taken:'That time is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.'};
+const ERR={slot_taken:'That day is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.'};
 async function api(path,opt={}){
   const r=await fetch(SUPABASE_URL+path,{...opt,headers:{apikey:SUPABASE_ANON_KEY,...(token?{Authorization:'Bearer '+token}:{}),'Content-Type':'application/json',...(opt.headers||{})}});
   const j=await r.json().catch(()=>null);
@@ -69,13 +69,12 @@ $('login').onsubmit=async e=>{e.preventDefault();$('lm').textContent='';
   catch(x){$('lm').textContent=/invalid/i.test(x.message)?'Wrong email or password.':x.message}};
 $('out').onclick=signOut;$('rf').onclick=load;$('flt').onchange=load;
 const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-const fmtT=t=>{const[h,m]=t.split(':');const H=+h;return(H%12||12)+':'+m+' '+(H<12?'AM':'PM')};
 async function load(){
   $('am').textContent='';const st=$('flt').value;
-  try{const rows=await api(`/rest/v1/bookings?status=eq.${st}&order=slot_date.asc,slot_time.asc,created_at.asc`);
+  try{const rows=await api(`/rest/v1/bookings?status=eq.${st}&order=slot_date.asc,created_at.asc`);
     $('list').innerHTML=rows.length?rows.map(b=>`
     <article class="card">
-      <div class="top"><div class="when">${esc(fmtD(b.slot_date))} &middot; ${esc(fmtT(b.slot_time))}</div><span class="tag ${b.status}">${b.status}</span></div>
+      <div class="top"><div class="when">${esc(fmtD(b.slot_date))}</div><span class="tag ${b.status}">${b.status}</span></div>
       <dl><dt>Name</dt><dd>${esc(b.name)}</dd><dt>Phone</dt><dd><a href="tel:${esc(b.phone)}" style="color:inherit">${esc(b.phone)}</a></dd>
       <dt>Email</dt><dd><a href="mailto:${esc(b.email)}" style="color:inherit">${esc(b.email)}</a></dd><dt>Service</dt><dd>${esc(b.service)}</dd></dl>
       <pre>${esc(b.selections)}</pre>
@@ -84,7 +83,7 @@ async function load(){
   catch(x){$('am').textContent=x.message}
 }
 $('list').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;
-  if(b.dataset.a==='approve_booking'&&!confirm('Accept this booking? That time will be blocked on the public calendar.'))return;
+  if(b.dataset.a==='approve_booking'&&!confirm('Accept this booking? The whole day will be blocked on the public calendar.'))return;
   b.disabled=true;let err='';
   try{await api('/rest/v1/rpc/'+b.dataset.a,{method:'POST',body:JSON.stringify({p_id:b.dataset.id})})}catch(x){err=x.message}
   await load();if(err)$('am').textContent=err};
