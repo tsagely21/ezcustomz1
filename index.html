@@ -398,11 +398,11 @@ $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('msg').val
 /* calendar */
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'],now=new Date(),minD=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1),fmt={weekday:'long',month:'long',day:'numeric',year:'numeric'};
 /* ===== PASTE YOUR SUPABASE VALUES HERE (Project Settings > API). The anon key is public by design. NEVER paste the service_role key. ===== */
-const SUPABASE_URL='https://https://umvdxjnhzehcoujrishh.supabase.co';
+const SUPABASE_URL='https://umvdxjnhzehcoujrishh.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
 /* ============================================================================================================================== */
 const SB_ON=!/YOUR-/.test(SUPABASE_URL+SUPABASE_ANON_KEY);
-const SB={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json'};
+const SB={apikey:SUPABASE_ANON_KEY,'Content-Type':'application/json'};
 const HOURS=[9,10,11,12,13,14,15,16,17],taken=new Set();let selT='';
 const hh=h=>(h%12||12)+':00 '+(h<12?'AM':'PM');
 const full=k=>HOURS.every(h=>taken.has(k+'T'+h));
