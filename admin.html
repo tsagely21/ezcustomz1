@@ -55,7 +55,7 @@ const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,
 let token=sessionStorage.getItem('ezt')||'';
 const ERR={slot_taken:'That time is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.'};
 async function api(path,opt={}){
-  const r=await fetch(SUPABASE_URL+path,{...opt,headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+(token||SUPABASE_ANON_KEY),'Content-Type':'application/json',...(opt.headers||{})}});
+  const r=await fetch(SUPABASE_URL+path,{...opt,headers:{apikey:SUPABASE_ANON_KEY,...(token?{Authorization:'Bearer '+token}:{}),'Content-Type':'application/json',...(opt.headers||{})}});
   const j=await r.json().catch(()=>null);
   if(r.status===401||(j&&j.code==='PGRST303')){signOut();throw new Error('Session expired. Please sign in again.')}
   if(!r.ok){const m=(j&&(j.message||j.msg||j.error_description))||'Request failed';throw new Error(ERR[m]||m)}
@@ -92,4 +92,3 @@ if(token){show(true);load()}
 </script>
 </body>
 </html>
-
