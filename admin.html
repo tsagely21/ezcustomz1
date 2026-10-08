@@ -26,6 +26,14 @@ pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);borde
 .tabs button[aria-selected=true]{background:var(--vio);border-color:var(--vio);color:#fff}
 .cnl{color:#e0a030;border-color:#e0a030}.note{color:var(--mute);font-size:14px;margin:0 0 12px}
 .msg{color:var(--err);min-height:1.4em;margin:6px 0}.empty{color:var(--mute);text-align:center;padding:40px 0}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.ch button{width:44px;padding:8px 0}
+.og{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.og span{text-align:center;font-size:12px;color:var(--mute)}
+.od{aspect-ratio:1;padding:0;position:relative;font-weight:600}.od:disabled{opacity:.3;cursor:default}
+.od.off{background:var(--line);color:var(--mute);text-decoration:line-through}
+.od.bk::after{content:'';position:absolute;bottom:5px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--ok)}
+.rr{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.rr label{flex:1;min-width:140px;display:grid;gap:4px;color:var(--mute);font-size:14px}
+.full{width:100%;margin:0 0 10px}h2{font-size:18px;margin:22px 0 10px}
+.orow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.orow .when{flex:1 1 100%;font-size:16px}.orow input{flex:1;min-width:160px}
 </style>
 </head>
 <body>
@@ -46,9 +54,26 @@ pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);borde
       <button role="tab" data-t="pending" aria-selected="true">Pending</button>
       <button role="tab" data-t="approved" aria-selected="false">Review confirmed</button>
       <button role="tab" data-t="closed" aria-selected="false">Declined / cancelled</button>
+      <button role="tab" data-t="off" aria-selected="false">Days off</button>
     </div>
     <div class="msg" id="am" role="alert"></div>
     <div id="list"></div>
+    <div id="off" hidden>
+      <p class="note">Tap a day to take it off. It greys out on the quote page so customers can't request it. Tap a greyed-out day to open it back up. Green dots are confirmed bookings.</p>
+      <div class="card">
+        <div class="ch"><button type="button" id="op" aria-label="Previous month">&lsaquo;</button><b id="om" aria-live="polite"></b><button type="button" id="ox" aria-label="Next month">&rsaquo;</button></div>
+        <div class="og" aria-hidden="true"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+        <div class="og" id="od"></div>
+      </div>
+      <form class="card" id="rg">
+        <b>Block several days at once</b>
+        <div class="rr"><label>From<input type="date" id="bf" required></label><label>To (optional)<input type="date" id="bt"></label></div>
+        <input class="full" id="bn" maxlength="200" placeholder="Note, only you see this (e.g. Vacation)">
+        <button class="primary">Block these days</button>
+      </form>
+      <h2>Upcoming days off</h2>
+      <div id="ol"></div>
+    </div>
   </section>
 </main>
 <script>
@@ -58,7 +83,7 @@ const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
 /* ============================================================================================================================== */
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let token=sessionStorage.getItem('ezt')||'';
-const ERR={slot_taken:'That day is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_approved:'That booking is no longer confirmed. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.'};
+const ERR={slot_taken:'That day is already approved for someone else, so this one can\'t be accepted.',not_pending:'This booking was already handled. Refreshing.',not_approved:'That booking is no longer confirmed. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.',bad_range:'"To" date is before "From" date.',range_too_long:'Pick a range of a year or less.'};
 async function api(path,opt={}){
   const r=await fetch(SUPABASE_URL+path,{...opt,headers:{apikey:SUPABASE_ANON_KEY,...(token?{Authorization:'Bearer '+token}:{}),'Content-Type':'application/json',...(opt.headers||{})}});
   const j=await r.json().catch(()=>null);
@@ -70,13 +95,14 @@ function show(on){$('login').hidden=on;$('app').hidden=!on}
 function signOut(){token='';sessionStorage.removeItem('ezt');show(false)}
 $('login').onsubmit=async e=>{e.preventDefault();$('lm').textContent='';
   try{const j=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:$('em').value.trim(),password:$('pw').value})});
-    token=j.access_token;sessionStorage.setItem('ezt',token);$('pw').value='';show(true);load()}
+    token=j.access_token;sessionStorage.setItem('ezt',token);$('pw').value='';show(true);go()}
   catch(x){$('lm').textContent=/invalid/i.test(x.message)?'Wrong email or password.':x.message}};
 let tab='pending';
 const Q={pending:'status=eq.pending',approved:'status=eq.approved',closed:'status=in.(declined,cancelled)'};
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;tab=b.dataset.t;
-  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));load()};
-$('out').onclick=signOut;$('rf').onclick=load;
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));go()};
+function go(){const o=tab==='off';$('list').hidden=o;$('off').hidden=!o;o?loadOff():load()}
+$('out').onclick=signOut;$('rf').onclick=go;
 const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 async function load(){
   $('am').textContent='';
@@ -101,7 +127,50 @@ $('list').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)ret
   b.disabled=true;let err='';
   try{await api('/rest/v1/rpc/'+b.dataset.a,{method:'POST',body:JSON.stringify({p_id:b.dataset.id})})}catch(x){err=x.message}
   await load();if(err)$('am').textContent=err};
-if(token){show(true);load()}
+
+/* days off */
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+let offRows=[],apprDays=new Set(),ovy=new Date().getFullYear(),ovm=new Date().getMonth(),busy=false;
+const rpc=(n,b={})=>api('/rest/v1/rpc/'+n,{method:'POST',body:JSON.stringify(b)});
+async function loadOff(){
+  $('am').textContent='';
+  try{const [o,b]=await Promise.all([rpc('admin_list_blocked_days'),api('/rest/v1/bookings?status=eq.approved&select=slot_date')]);
+    offRows=o||[];apprDays=new Set(b.map(x=>x.slot_date))}
+  catch(x){$('am').textContent=/could not find the function/i.test(x.message)?'Days off isn\'t set up yet. Run supabase/days_off.sql in the Supabase SQL Editor.':x.message}
+  drawOff();
+}
+function drawOff(){
+  const s=new Set(offRows.map(r=>r.day)),today=isoD(new Date()),now=new Date();
+  $('om').textContent=new Date(ovy,ovm,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  let h='<span></span>'.repeat(new Date(ovy,ovm,1).getDay());
+  for(let d=1,n=new Date(ovy,ovm+1,0).getDate();d<=n;d++){const k=isoD(new Date(ovy,ovm,d)),off=s.has(k),bk=apprDays.has(k);
+    h+=`<button type="button" class="od${off?' off':''}${bk?' bk':''}" data-k="${k}" ${k<today?'disabled':''} aria-pressed="${off}" aria-label="${esc(fmtD(k))}${off?', day off':''}${bk?', confirmed booking':''}">${d}</button>`}
+  $('od').innerHTML=h;
+  $('op').disabled=ovy===now.getFullYear()&&ovm===now.getMonth();
+  const up=offRows.filter(r=>r.day>=today);
+  $('ol').innerHTML=up.length?up.map(r=>`
+    <div class="card orow"><div class="when">${esc(fmtD(r.day))}${apprDays.has(r.day)?' <span class="tag approved">has booking</span>':''}</div>
+      <input data-n="${r.day}" maxlength="200" value="${esc(r.note)}" placeholder="Note (optional)">
+      <button data-s="${r.day}">Save note</button><button class="dec" data-u="${r.day}">Remove</button></div>`).join('')
+    :`<div class="empty">No days off scheduled.</div>`;
+}
+async function offDo(fn,b){if(busy)return;busy=true;$('am').textContent='';let err='';
+  try{await rpc(fn,b)}catch(x){err=x.message}
+  busy=false;await loadOff();if(err)$('am').textContent=err}
+$('op').onclick=()=>{if(--ovm<0){ovm=11;ovy--}drawOff()};
+$('ox').onclick=()=>{if(++ovm>11){ovm=0;ovy++}drawOff()};
+$('od').onclick=e=>{const b=e.target.closest('.od');if(!b||b.disabled)return;const k=b.dataset.k;
+  if(b.classList.contains('off'))return offDo('unblock_day',{p_day:k});
+  if(apprDays.has(k)&&!confirm('There is a confirmed booking on this day. Take it off anyway? The booking stays; cancel it from "Review confirmed" if needed.'))return;
+  offDo('block_days',{p_from:k,p_to:k,p_note:''})};
+$('rg').onsubmit=async e=>{e.preventDefault();const f=$('bf').value,t=$('bt').value||f;
+  if(t<f){$('am').textContent='"To" date is before "From" date.';return}
+  await offDo('block_days',{p_from:f,p_to:t,p_note:$('bn').value.trim()});
+  if(!$('am').textContent){$('bf').value=$('bt').value=$('bn').value='';ovy=+f.slice(0,4);ovm=+f.slice(5,7)-1;drawOff()}};
+$('ol').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.u)return offDo('unblock_day',{p_day:b.dataset.u});
+  if(b.dataset.s){const k=b.dataset.s;offDo('block_days',{p_from:k,p_to:k,p_note:document.querySelector(`input[data-n="${k}"]`).value.trim()})}};
+if(token){show(true);go()}
 </script>
 </body>
 </html>
