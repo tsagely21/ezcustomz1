@@ -439,7 +439,7 @@ const GALLERY=[
 
       <fieldset>
         <legend>What day would work best for you?</legend>
-        <p class="sub">Pick the day you'd like. Grayed-out days are already booked. We'll confirm your request when we follow up.</p>
+        <p class="sub">Pick the day you'd like. Grayed-out days are already booked or unavailable. We'll confirm your request when we follow up.</p>
         <div class="cal-wrap">
           <div class="cal">
             <div class="cal-head"><button type="button" class="cn" id="cp" aria-label="Previous month">&lsaquo;</button><b id="cm" aria-live="polite"></b><button type="button" class="cn" id="cx" aria-label="Next month">&rsaquo;</button></div>
@@ -631,8 +631,8 @@ $('qf').addEventListener('submit',async e=>{
       const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/create_booking_request',{method:'POST',headers:SB,body:JSON.stringify({p_date:iso(sel),p_name:$('nm').value,p_phone:$('ph').value,p_email:$('em').value,p_service:picks().join(' + '),p_selections:$('msg').value})});
       if(r.ok)booked=true;else{
         const j=await r.json().catch(()=>({})),c=j.message||'';
-        const t={slot_taken:'Sorry, that day was just booked. Please pick another day.',too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
-        if(t){if(btn)btn.disabled=false;if(c==='slot_taken'){sel=null;pick();await loadTaken()}$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});return}
+        const t={slot_taken:'Sorry, that day was just booked. Please pick another day.',day_blocked:"Sorry, we're not available that day. Please pick another day.",too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
+        if(t){if(btn)btn.disabled=false;if(c==='slot_taken'||c==='day_blocked'){sel=null;pick();await loadTaken()}$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});return}
       }
     }catch(_){}
   }
@@ -665,9 +665,10 @@ const SB={apikey:SUPABASE_ANON_KEY,'Content-Type':'application/json'};
 const taken=new Set();
 async function loadTaken(){
   if(!SB_ON)return;
-  try{const f=iso(minD),t=iso(new Date(minD.getFullYear(),minD.getMonth(),minD.getDate()+120));
-    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/get_taken_days',{method:'POST',headers:SB,body:JSON.stringify({from_date:f,to_date:t})});
-    if(!r.ok)return;taken.clear();(await r.json()).forEach(x=>taken.add(x.slot_date));
+  try{const f=iso(minD),t=iso(new Date(minD.getFullYear(),minD.getMonth(),minD.getDate()+120)),t2=iso(new Date(minD.getFullYear()+1,minD.getMonth(),minD.getDate()));
+    const rpc=(n,b)=>fetch(SUPABASE_URL+'/rest/v1/rpc/'+n,{method:'POST',headers:SB,body:JSON.stringify(b)}).then(r=>r.ok?r.json():null).catch(()=>null);
+    const [bk,off]=await Promise.all([rpc('get_taken_days',{from_date:f,to_date:t}),rpc('get_blocked_days',{from_date:f,to_date:t2})]); // off = admin days off
+    if(!bk&&!off)return;taken.clear();(bk||[]).forEach(x=>taken.add(x.slot_date));(off||[]).forEach(x=>taken.add(x.day));
   }catch(_){}
   cal();
 }
