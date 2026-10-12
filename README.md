@@ -28,6 +28,8 @@ index.html            Public site: quote form, calendar, gallery
 admin.html            Private admin panel
 supabase/days_off.sql Database schema for the days-off feature
 images/gallery/       Gallery photos
+assets/               Favicon and social share images
+favicon.ico           Browser tab icon
 CNAME                 Custom domain for GitHub Pages
 CLAUDE.md             Codebase notes for AI coding assistants
 ```
