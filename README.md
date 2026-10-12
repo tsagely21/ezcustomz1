@@ -26,7 +26,7 @@ Plain HTML, CSS and JavaScript. No framework, no build step, no dependencies.
 ```
 index.html            Public site: quote form, calendar, gallery
 admin.html            Private admin panel
-supabase/days_off.sql Database schema for the days-off feature
+supabase/               Database SQL and backend notes (see supabase/README.md)
 images/gallery/       Gallery photos
 assets/               Favicon and social share images
 favicon.ico           Browser tab icon
