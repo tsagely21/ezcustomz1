@@ -177,6 +177,8 @@ footer{background:#0a0615;color:#8f84a8;font-size:13px;padding:18px clamp(18px,6
 .lb.open .lb-fig{transform:none}
 .lb-fig img{display:block;max-width:min(94vw,980px);max-height:calc(100vh - 170px);max-height:calc(100dvh - 170px);width:auto;height:auto;border-radius:14px;border:1px solid #33294f;box-shadow:0 24px 70px rgba(0,0,0,.6);background:#120c26;transition:opacity .22s ease}
 .lb-fig img.sw{opacity:0}
+.lb-fig video{display:block;max-width:min(94vw,980px);max-height:calc(100vh - 170px);max-height:calc(100dvh - 170px);width:auto;height:auto;border-radius:14px;border:1px solid #33294f;box-shadow:0 24px 70px rgba(0,0,0,.6);background:#000}
+.lb-fig video[hidden],.lb-fig img[hidden]{display:none}
 .lb-bar{display:flex;align-items:center;gap:14px;color:#fff}
 .lb-cap{min-width:150px;text-align:center}
 .lb-cap b{display:block;font:600 17px/1.2 var(--head);letter-spacing:-.03em}
@@ -428,7 +430,8 @@ main .hw-note{color:#ffa24d}
    One line per card, shown left to right.
    label : the big text on the card and in the preview        (e.g. '850 Stars')
    note  : small line under the label, like Sedan or Truck    (optional)
-   img   : the big photo shown in the preview                 (required)
+   img   : the big photo shown in the preview                 (required, unless video is set)
+   video : an .mp4 that plays in the preview instead of img   (optional, also set thumb)
    thumb : smaller photo used on the card                     (optional, leave it out to use img)
    alt   : description for screen readers                     (optional)
    pos   : which part of a photo stays visible on the card    (optional, e.g. 'center top')
@@ -439,6 +442,7 @@ const GALLERY=[
   {label:'850 Stars', note:'Sedan', img:'images/gallery/850-sedan.webp'},
   {label:'850 Stars', note:'Truck', img:'images/gallery/850-truck.webp'},
   {label:'1000 Stars', note:'Truck', img:'images/gallery/1000-truck.webp'},
+  {label:'1000 Stars', note:'F250', thumb:'images/gallery/1000-f250-thumb.jpg', video:'images/gallery/1000-f250.mp4'},
   {label:'1000 Stars', note:'4Runner', img:'images/gallery/1000-4runner.webp'},
   {label:'1200 Stars', note:'Truck', img:'images/gallery/1200-truck.webp'},
   {label:'Panoramic Roof', note:'650 Stars', img:'images/gallery/panoramic-roof.webp'}
@@ -450,7 +454,7 @@ const GALLERY=[
   const bar=document.getElementById('galBar'),thumb=document.getElementById('galThumb'),pv=document.getElementById('galPrev'),nx=document.getElementById('galNext');
   const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const n=GALLERY.length;
-  row.innerHTML=GALLERY.map((g,i)=>`<li><button type="button" class="gal-card" data-i="${i}" aria-haspopup="dialog" aria-label="View ${E(g.label)}${g.note?' '+E(g.note):''} photo larger"><img src="${E(g.thumb||g.img)}" alt="${E(g.alt||g.label+(g.note?' '+g.note:'')+' starlight headliner')}" width="640" height="800" loading="lazy" decoding="async" style="object-position:${E(g.pos||'center')}"><span class="gal-cap"><span class="gal-t"><b>${E(g.label)}</b>${g.note?`<small>${E(g.note)}</small>`:''}</span><i class="gal-ex" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></i></span></button></li>`).join('');
+  row.innerHTML=GALLERY.map((g,i)=>`<li><button type="button" class="gal-card" data-i="${i}" aria-haspopup="dialog" aria-label="View ${E(g.label)}${g.note?' '+E(g.note):''} ${g.video?'video':'photo'} larger"><img src="${E(g.thumb||g.img)}" alt="${E(g.alt||g.label+(g.note?' '+g.note:'')+' starlight headliner')}" width="640" height="800" loading="lazy" decoding="async" style="object-position:${E(g.pos||'center')}"><span class="gal-cap"><span class="gal-t"><b>${E(g.label)}</b>${g.note?`<small>${E(g.note)}</small>`:''}</span><i class="gal-ex" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${g.video?'<path d="M8 5v14l11-7z" fill="currentColor"/>':'<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>'}</svg></i></span></button></li>`).join('');
   sec.hidden=false;
   row.querySelectorAll('img').forEach(im=>{
     const ok=()=>im.classList.add('ld'),bad=()=>im.closest('li').classList.add('noimg');
@@ -472,22 +476,24 @@ const GALLERY=[
   const lb=document.createElement('div');
   lb.className='lb';lb.setAttribute('role','dialog');lb.setAttribute('aria-modal','true');lb.setAttribute('aria-label','Starlight photo preview');lb.setAttribute('aria-hidden','true');
   lb.innerHTML='<div class="lb-bg"></div><button type="button" class="lb-btn lb-x" aria-label="Close preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'+
-    '<figure class="lb-fig"><img alt="" decoding="async"><div class="lb-bar"><button type="button" class="lb-btn lb-prev" aria-label="Previous photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>'+
+    '<figure class="lb-fig"><img alt="" decoding="async"><video controls playsinline preload="metadata" hidden></video><div class="lb-bar"><button type="button" class="lb-btn lb-prev" aria-label="Previous photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>'+
     '<figcaption class="lb-cap" aria-live="polite"><b></b><span></span></figcaption><button type="button" class="lb-btn lb-next" aria-label="Next photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div></figure>';
   document.body.appendChild(lb);
+  const vid=lb.querySelector('video'),stop=()=>{vid.pause();vid.removeAttribute('src');vid.load()};
   const img=lb.querySelector('img'),lab=lb.querySelector('b'),cnt=lb.querySelector('.lb-cap span'),bx=lb.querySelector('.lb-x'),bp=lb.querySelector('.lb-prev'),bn=lb.querySelector('.lb-next');
   let idx=0,from=null,tok=0;
-  const pre=i=>{const p=new Image();p.src=GALLERY[(i+n)%n].img};
+  const pic=g=>g.img||g.thumb;
+  const pre=i=>{const p=new Image();p.src=pic(GALLERY[(i+n)%n])};
   function show(i){
     idx=(i+n)%n;const g=GALLERY[idx],t=++tok;
     img.classList.add('sw');
     const p=new Image();
-    const done=()=>{if(t!==tok)return;img.src=g.img;img.alt=g.alt||g.label+(g.note?' '+g.note:'')+' starlight headliner';lab.textContent=g.label;cnt.textContent=(g.note?g.note+' \u00b7 ':'')+(idx+1)+' / '+n;img.classList.remove('sw');pre(idx+1);pre(idx-1)};
-    p.onload=p.onerror=done;p.src=g.img;
+    const done=()=>{if(t!==tok)return;stop();vid.hidden=!g.video;img.hidden=!!g.video;if(g.video){vid.src=g.video;vid.play().catch(()=>{})}else img.src=g.img;img.alt=g.alt||g.label+(g.note?' '+g.note:'')+' starlight headliner';lab.textContent=g.label;cnt.textContent=(g.note?g.note+' \u00b7 ':'')+(idx+1)+' / '+n;img.classList.remove('sw');pre(idx+1);pre(idx-1)};
+    p.onload=p.onerror=done;p.src=pic(g);
     bp.hidden=bn.hidden=n<2;
   }
   function open(i,btn){from=btn||null;show(i);lb.setAttribute('aria-hidden','false');document.documentElement.classList.add('lb-lock');void lb.offsetWidth;lb.classList.add('open');setTimeout(()=>bx.focus({preventScroll:true}),30)}
-  function close(){if(!lb.classList.contains('open'))return;lb.classList.remove('open');lb.setAttribute('aria-hidden','true');document.documentElement.classList.remove('lb-lock');tok++;if(from)from.focus({preventScroll:true})}
+  function close(){if(!lb.classList.contains('open'))return;lb.classList.remove('open');lb.setAttribute('aria-hidden','true');document.documentElement.classList.remove('lb-lock');tok++;stop();if(from)from.focus({preventScroll:true})}
   row.addEventListener('click',e=>{const b=e.target.closest('.gal-card');if(b)open(+b.dataset.i,b)});
   lb.addEventListener('click',e=>{if(!e.target.closest('.lb-fig, .lb-x'))close()});
   bx.onclick=close;bp.onclick=()=>show(idx-1);bn.onclick=()=>show(idx+1);
