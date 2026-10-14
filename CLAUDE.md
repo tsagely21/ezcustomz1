@@ -7,6 +7,8 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 | File | What it is |
 |---|---|
 | `index.html` | Public site (~90 KB, single file: CSS, SVG sprites, markup, JS all inline) |
+| `reviews.html` | Public customer reviews page (same CSS/sprites/header copied from `index.html`). Lists reviews via RPC `get_reviews`, "Leave a review" form posts to `submit_review` |
+| `supabase/reviews.sql` | `reviews` table + `get_reviews` / `submit_review` RPCs. Reviews start `pending` and show only once approved in the admin Reviews tab |
 | `admin.html` | Private admin panel (`noindex`), single file. Supabase email/password login, manage bookings and days off |
 | `supabase/days_off.sql` | Idempotent SQL for the `blocked_days` table, RPCs and the booking trigger. Run by hand in the Supabase SQL Editor |
 | `images/gallery/*.webp` | Gallery photos used by `GALLERY` in `index.html` |
@@ -40,6 +42,7 @@ Styling: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` 
 - Login posts to Supabase `/auth/v1/token?grant_type=password`; JWT kept in `sessionStorage['ezt']`.
 - All data calls go through `api()` → Supabase REST (`/rest/v1/...`) with the anon key + bearer token. A 401 / `PGRST303` signs out.
 - Tabs: Pending / Review confirmed / Declined-cancelled (query `bookings` by `status`) and **Days off** (calendar + range form).
+- **Reviews** tab: sub-filter Waiting / Live / Hidden (`pending` / `approved` / `rejected`) via `admin_list_reviews(p_status)`; actions `set_review_status(p_id,p_status)`, `delete_review(p_id)`. Tab label shows the waiting count.
 - Booking actions are RPCs taking `p_id`: `approve_booking`, `decline_booking`, `cancel_booking`, `delete_booking`. Days off: `admin_list_blocked_days`, `block_days(p_from,p_to,p_note)`, `unblock_day(p_day)`.
 - `ERR` maps Postgres exception names (`slot_taken`, `not_admin`, ...) to user-facing text.
 
