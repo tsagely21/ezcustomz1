@@ -379,7 +379,6 @@ main .hw-note{color:#ffa24d}
 /* ---- reviews page ---- */
 .hero.rv{min-height:0;align-items:center}
 .hero.rv .hero-in{padding-top:clamp(96px,12vw,130px);padding-bottom:clamp(44px,6vw,64px)}
-.hero.rv::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.6;background-image:radial-gradient(1.2px 1.2px at 12% 30%,#fff,transparent),radial-gradient(1px 1px at 28% 70%,#d9c2ff,transparent),radial-gradient(1.4px 1.4px at 46% 22%,#fff,transparent),radial-gradient(1px 1px at 63% 58%,#fff,transparent),radial-gradient(1.2px 1.2px at 78% 18%,#d9c2ff,transparent),radial-gradient(1px 1px at 88% 66%,#fff,transparent),radial-gradient(1px 1px at 6% 82%,#fff,transparent),radial-gradient(1.3px 1.3px at 52% 88%,#d9c2ff,transparent);background-size:340px 260px}
 .hero-in button{pointer-events:auto}
 @media(max-width:600px){.hero.rv .hero-in{padding-top:165px}}
 .sum{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px}
@@ -437,6 +436,7 @@ main .hw-note{color:#ffa24d}
 </header>
 
 <section class="hero rv" id="top">
+  <canvas id="sky" aria-hidden="true"></canvas>
   <div class="hw" id="hw" role="note"><b>🎃 Halloween special: $150 off</b><span>Every starlight package. Till the end of October only.</span></div>
   <div class="hero-in">
     <h1>Customer reviews</h1>
@@ -550,6 +550,22 @@ $('rf').addEventListener('submit',async e=>{
   $('ty').scrollIntoView({block:'center',behavior:'smooth'});
 });
 ['rn','rc'].forEach(id=>$(id).addEventListener('input',()=>$(id).classList.remove('bad')));
+/* starfield */
+const c=$('sky'),x=c.getContext('2d'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let S=[],W,H,mx=-999,my=-999;
+function size(){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;W=r.width;H=r.height;c.width=W*d;c.height=H*d;x.setTransform(d,0,0,d,0,0);
+  const g=()=>Math.random()+Math.random()+Math.random()-1.5;
+  S=Array.from({length:Math.min(1400,Math.round(W*H/650))},()=>{const u=Math.random(),yc=H*(.2+.3*u),hh=H*(.12+.12*Math.sin(u*3.14));
+    return{x:u*W,y:yc+g()*2*hh,r:Math.random()*1.2+.4,p:Math.random()*6.28,s:Math.random()*.0015+.0005}});if(rm)draw(0)}
+function draw(t){x.clearRect(0,0,W,H);
+  for(const s of S){const n=Math.max(0,1-Math.hypot(s.x-mx,s.y-my)/150),A=Math.min(1,.45+.35*Math.sin(s.p+t*s.s*6)+n*.6);
+    x.fillStyle=n>.2?'#d6b3ff':'#eaf3ff';
+    x.globalAlpha=A*.16;x.beginPath();x.arc(s.x,s.y,s.r*3.2+n*4,0,6.283);x.fill();
+    x.globalAlpha=A;x.beginPath();x.arc(s.x,s.y,s.r+n*1.6,0,6.283);x.fill()}
+  if(!rm)requestAnimationFrame(draw)}
+c.parentElement.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top});
+c.parentElement.addEventListener('pointerleave',()=>{mx=my=-999});
+addEventListener('resize',size);size();if(!rm)requestAnimationFrame(draw);
 </script>
 </body>
 </html>
