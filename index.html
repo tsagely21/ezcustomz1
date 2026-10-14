@@ -371,6 +371,11 @@ main .pg .old{color:#9a93ad}
 main .hw-note{color:#ffa24d}
 @media(prefers-reduced-motion:no-preference){main::before{animation:twinkle 7s ease-in-out infinite alternate}@keyframes twinkle{from{opacity:.4}to{opacity:.7}}}
 
+/* hero buttons (quote + reviews) */
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero .btn.alt{color:#fff;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.hero .btn.alt:hover{background:rgba(255,255,255,.14);border-color:var(--org)}
+
 /* entrance: hero copy rises in once, staggered (decorative, skipped for reduced motion) */
 @media(prefers-reduced-motion:no-preference){
   .hero-in>*{opacity:0;transform:translateY(14px);animation:rise .6s var(--ease) forwards}
@@ -405,7 +410,7 @@ main .hw-note{color:#ffa24d}
   <div class="hero-in">
     <h1>Make every drive feel different.</h1>
     <p>Starlight headliners and custom speaker builds for your ride. Tell us what you're dreaming up and we'll put together a quote.</p>
-    <a class="btn" href="#quote">Build my quote</a>
+    <div class="cta"><a class="btn" href="#quote">Build my quote</a><a class="btn alt" href="reviews.html">Customer reviews &#9733;</a></div>
   </div>
   <svg class="dc w-hero" aria-hidden="true"><use href="#i-web"/></svg><span class="dc spider" aria-hidden="true"><i></i><svg><use href="#i-spider"/></svg></span><svg class="dc pk-hero" aria-hidden="true"><use href="#i-pumpkin"/></svg><svg class="dc pk-hero2" aria-hidden="true"><use href="#i-pumpkin"/></svg>
   <div class="hint">Move your cursor across the ceiling</div>

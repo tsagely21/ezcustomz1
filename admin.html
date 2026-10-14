@@ -10,7 +10,7 @@
 <style>
 :root{--bg:#0d0a14;--card:#171224;--line:#2d2540;--ink:#f1ecfa;--mute:#a79cc0;--vio:#9b5de5;--ok:#2e9e5b;--err:#ff8a8a}
 @media(prefers-color-scheme:light){:root{--bg:#f6f3fb;--card:#fff;--line:#ddd3ee;--ink:#1c1530;--mute:#675c80;--err:#c62828}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
 h1{font-size:22px;margin:0}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 input,select,button{font:inherit;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
@@ -35,6 +35,9 @@ pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);borde
 .od.bk::after{content:'';position:absolute;bottom:5px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--ok)}
 .rr{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.rr label{flex:1;min-width:140px;display:grid;gap:4px;color:var(--mute);font-size:14px}
 .full{width:100%;margin:0 0 10px}h2{font-size:18px;margin:22px 0 10px}
+.tabs.sub button{min-width:90px;font-size:14px;padding:8px 10px}.tabs.sub button[aria-selected=true]{background:transparent;color:var(--vio);border-color:var(--vio)}
+.stars{color:#ff9a2e;font-size:20px;letter-spacing:2px}.stars i{font-style:normal;color:var(--line)}
+.rvc{white-space:pre-wrap;word-break:break-word;margin:10px 0 12px}
 .orow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.orow .when{flex:1 1 100%;font-size:16px}.orow input{flex:1;min-width:160px}
 </style>
 </head>
@@ -57,9 +60,15 @@ pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);borde
       <button role="tab" data-t="approved" aria-selected="false">Review confirmed</button>
       <button role="tab" data-t="closed" aria-selected="false">Declined / cancelled</button>
       <button role="tab" data-t="off" aria-selected="false">Days off</button>
+      <button role="tab" data-t="rev" aria-selected="false" id="rvt">Reviews</button>
     </div>
     <div class="msg" id="am" role="alert"></div>
     <div id="list"></div>
+    <div id="rev" hidden>
+      <p class="note">New reviews wait here until you approve them. Only approved reviews show on the public reviews page.</p>
+      <div class="tabs sub" id="rvs"><button data-s="pending" aria-selected="true">Waiting</button><button data-s="approved" aria-selected="false">Live on site</button><button data-s="rejected" aria-selected="false">Hidden</button></div>
+      <div id="rvl"></div>
+    </div>
     <div id="off" hidden>
       <p class="note">Tap a day to take it off. It greys out on the quote page so customers can't request it. Tap a greyed-out day to open it back up. Green dots are confirmed bookings.</p>
       <div class="card">
@@ -102,8 +111,8 @@ $('login').onsubmit=async e=>{e.preventDefault();$('lm').textContent='';
 let tab='pending';
 const Q={pending:'status=eq.pending',approved:'status=eq.approved',closed:'status=in.(declined,cancelled)'};
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;tab=b.dataset.t;
-  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));go()};
-function go(){const o=tab==='off';$('list').hidden=o;$('off').hidden=!o;o?loadOff():load()}
+  document.querySelectorAll('.tabs:not(.sub) button').forEach(x=>x.setAttribute('aria-selected',x===b));go()};
+function go(){const o=tab==='off',r=tab==='rev';$('list').hidden=o||r;$('off').hidden=!o;$('rev').hidden=!r;o?loadOff():r?loadRev():load();revCount()}
 $('out').onclick=signOut;$('rf').onclick=go;
 const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 async function load(){
@@ -172,6 +181,32 @@ $('rg').onsubmit=async e=>{e.preventDefault();const f=$('bf').value,t=$('bt').va
 $('ol').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.u)return offDo('unblock_day',{p_day:b.dataset.u});
   if(b.dataset.s){const k=b.dataset.s;offDo('block_days',{p_from:k,p_to:k,p_note:document.querySelector(`input[data-n="${k}"]`).value.trim()})}};
+
+/* reviews */
+let rvS='pending';
+const REV_MISSING=/could not find the function/i,REV_SETUP='Reviews aren\'t set up yet. Run supabase/reviews.sql in the Supabase SQL Editor.';
+const stars=n=>`<span class="stars" aria-label="${n} out of 5 stars">${'★'.repeat(n)}<i>${'★'.repeat(5-n)}</i></span>`;
+async function revCount(){try{const n=(await rpc('admin_list_reviews',{p_status:'pending'})).length;$('rvt').textContent='Reviews'+(n?' ('+n+')':'')}catch(_){}}
+async function loadRev(){
+  $('am').textContent='';
+  try{const rows=await rpc('admin_list_reviews',{p_status:rvS});
+    $('rvl').innerHTML=rows.length?rows.map(r=>`
+    <article class="card">
+      <div class="top">${stars(r.rating)}<span class="tag ${r.status==='approved'?'approved':r.status==='rejected'?'declined':''}">${{pending:'waiting',approved:'live',rejected:'hidden'}[r.status]}</span></div>
+      <p class="rvc">${esc(r.comment)}</p>
+      <dl><dt>Name</dt><dd>${esc(r.name)}</dd>${r.vehicle?`<dt>Vehicle</dt><dd>${esc(r.vehicle)}</dd>`:''}<dt>Posted</dt><dd>${esc(new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}))}</dd></dl>
+      <div class="acts">${r.status!=='approved'?`<button class="acc" data-r="approved" data-id="${r.id}">Approve</button>`:''}${r.status!=='rejected'?`<button class="cnl" data-r="rejected" data-id="${r.id}">Hide</button>`:''}<button class="dec" data-r="del" data-id="${r.id}">Delete</button></div>
+    </article>`).join(''):`<div class="empty">${{pending:'No reviews waiting.',approved:'No reviews live yet.',rejected:'No hidden reviews.'}[rvS]}</div>`}
+  catch(x){$('rvl').innerHTML='';$('am').textContent=REV_MISSING.test(x.message)?REV_SETUP:x.message}
+}
+$('rvs').onclick=e=>{const b=e.target.closest('button[data-s]');if(!b)return;rvS=b.dataset.s;
+  $('rvs').querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',x===b));loadRev()};
+$('rvl').onclick=async e=>{const b=e.target.closest('button[data-r]');if(!b)return;
+  const del=b.dataset.r==='del';
+  if(del&&!confirm('Permanently delete this review? This cannot be undone.'))return;
+  b.disabled=true;let err='';
+  try{del?await rpc('delete_review',{p_id:b.dataset.id}):await rpc('set_review_status',{p_id:b.dataset.id,p_status:b.dataset.r})}catch(x){err=x.message}
+  await loadRev();revCount();if(err)$('am').textContent=err};
 if(token){show(true);go()}
 </script>
 </body>
