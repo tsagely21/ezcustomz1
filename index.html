@@ -47,10 +47,6 @@ h1{font:700 clamp(36px,6.4vw,72px)/1.04 var(--head);letter-spacing:-.04em;margin
 .hero p{color:#cfc5e2;max-width:46ch;font-size:17px;margin:0 0 28px}
 .btn{display:inline-block;background:var(--vio);color:#fff;border:0;border-radius:10px;padding:15px 24px;font:700 16px var(--body);text-decoration:none;cursor:pointer}
 .btn:hover{background:var(--vio-d)}
-.hw{position:absolute;z-index:3;top:0;left:0;width:min(54vw,620px);min-width:300px;padding:14px 46px 30px 18px;color:#fff;background:linear-gradient(100deg,#ff6a00,#c2410c 55%,#5b21b6);clip-path:polygon(0 0,100% 0,calc(100% - 26px) 50%,100% calc(100% - 14px),70% 100%,38% calc(100% - 12px),0 100%);box-shadow:0 10px 30px rgba(255,106,0,.35);font-family:var(--body);pointer-events:none}
-.hw b{display:block;font:800 clamp(14px,2.3vw,20px)/1.15 var(--head);letter-spacing:-.02em;text-transform:uppercase}
-.hw span{display:block;font-size:clamp(12px,1.7vw,14px);margin-top:3px;opacity:.95}
-.hw-note{margin:2px 0 14px;color:#c2410c;font-weight:600;font-size:14px}
 .hint{z-index:2;position:absolute;right:clamp(18px,4vw,48px);bottom:18px;font-size:13px;color:#a99dc2}
 main{padding:clamp(44px,7vw,90px) clamp(16px,6vw,90px)}
 .wrap{max-width:1140px;margin:0 auto}
@@ -230,9 +226,6 @@ aside{background:linear-gradient(180deg,#1a0f2a,#0f0a20);border:1px solid rgba(2
 .amt{background:linear-gradient(90deg,#ffb15c,#ff7a1a);-webkit-background-clip:text;background-clip:text;color:transparent}
 .amt small{-webkit-text-fill-color:#b9aed1}
 .dep{border:1px solid rgba(255,122,26,.45)}.dep b{color:#ffb15c}
-.hw-note{color:var(--org-d)}
-:root[data-theme="dark"] .hw-note{color:#ffa24d}
-@media(prefers-color-scheme:dark){.hw-note{color:#ffa24d}}
 .ig{background:linear-gradient(100deg,#1a0f2a,#2a1202 140%);overflow:hidden;padding-right:clamp(120px,22vw,300px)}
 .ig a{color:#ffb15c}
 .w-ig{top:0;left:0;width:clamp(100px,16vw,190px);height:clamp(100px,16vw,190px);color:rgba(255,255,255,.22)}
@@ -290,9 +283,6 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--vio);backgr
 .type:has(input:checked){border-color:var(--vio);box-shadow:inset 0 0 0 1px var(--vio),0 10px 24px -14px var(--glow)}
 .type:has(input:checked)::after{color:var(--vio)}
 .group{border-left:4px solid var(--vio)}
-.hw-note{color:var(--vio-d)}
-@media(prefers-color-scheme:dark){.hw-note{color:#cfb2ff}}
-:root[data-theme="dark"] .hw-note{color:#cfb2ff}
 
 /* calendar */
 .day{transition:background .15s var(--ease),transform .15s var(--ease),box-shadow .15s var(--ease)}
@@ -368,7 +358,6 @@ main::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
 main>.wrap{position:relative;z-index:1}
 main .pg .now{color:#ffa24d}
 main .pg .old{color:#9a93ad}
-main .hw-note{color:#ffa24d}
 @media(prefers-reduced-motion:no-preference){main::before{animation:twinkle 7s ease-in-out infinite alternate}@keyframes twinkle{from{opacity:.4}to{opacity:.7}}}
 
 /* hero buttons (quote + reviews) */
@@ -406,7 +395,6 @@ main .hw-note{color:#ffa24d}
 
 <section class="hero" id="top">
   <canvas id="sky" aria-hidden="true"></canvas>
-  <div class="hw" id="hw" role="note"><b>🎃 Halloween special: $150 off</b><span>Every starlight package. Till the end of October only.</span></div>
   <div class="hero-in">
     <h1>Make every drive feel different.</h1>
     <p>Starlight headliners and custom speaker builds for your ride. Tell us what you're dreaming up and we'll put together a quote.</p>
@@ -553,7 +541,6 @@ const GALLERY=[
 
         <div class="group" id="sl" hidden>
           <h3>Starlight setup</h3>
-          <p class="hw-note" id="hwn">🎃 Halloween special: $150 off every package, till the end of October only. Old price crossed out.</p>
           <b class="pgh">Star count</b>
           <div class="pg" id="pg" tabindex="-1" role="group" aria-label="Pick a star count"></div>
           <div class="row">
@@ -675,22 +662,14 @@ $('yr').innerHTML=opts([...Array(31).keys()].map(i=>2026-i).concat('1995 or olde
 $('mk').innerHTML=opts(Object.keys(M),'Select make');
 $('mk').onchange=()=>{$('md').innerHTML=opts(M[$('mk').value]||[],M[$('mk').value]?'Select model':'Select make first');rec()};
 $('md').onchange=()=>rec();
-/* HALLOWEEN SALE: edit SALE_OFF / SALE_END here. After SALE_END the page goes back to regular prices on its own. */
-const SALE_OFF=150,SALE_END='2026-10-31';
-const live=new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})<=SALE_END;
-if(!live){$('hw').remove();$('hwn').remove()}
-const strike=t=>[...t].map(c=>c+'\u0336').join('');
 [...$('pkg').options].forEach(o=>{if(!o.dataset.n)return;
   o.dataset.c=o.textContent;
-  if(live){const reg=+o.dataset.p,now=reg-SALE_OFF,f=n=>'$'+n.toLocaleString();
-    o.dataset.p=now;o.value=o.dataset.n+' stars ('+f(now)+' Halloween special, reg. '+f(reg)+')';
-    o.dataset.c=o.dataset.n+' stars: '+f(now);o.textContent=o.dataset.n+' stars: '+strike(f(reg))+' '+f(now)}
   o.dataset.l=o.textContent});
 function chips(){
   const g=$('pg');if(!g)return;
   g.innerHTML=[...$('pkg').options].filter(o=>o.dataset.n).map(o=>{
-    const reg=live?'$'+(+o.dataset.p+SALE_OFF).toLocaleString():'',now='$'+(+o.dataset.p).toLocaleString();
-    return `<button type="button" data-v="${o.value.replace(/"/g,'&quot;')}" aria-pressed="${o.value===$('pkg').value}">${/recommended/.test(o.textContent)?'<span class="tag">Recommended</span>':''}<span>${o.dataset.n} stars</span>${reg?`<span class="old" aria-label="was ${reg}">${reg}</span>`:''}<span class="now">${now}</span></button>`}).join('');
+    const now='$'+(+o.dataset.p).toLocaleString();
+    return `<button type="button" data-v="${o.value.replace(/"/g,'&quot;')}" aria-pressed="${o.value===$('pkg').value}">${/recommended/.test(o.textContent)?'<span class="tag">Recommended</span>':''}<span>${o.dataset.n} stars</span><span class="now">${now}</span></button>`}).join('');
 }
 $('pg').onclick=e=>{const b=e.target.closest('button');if(!b)return;$('pkg').value=b.dataset.v;$('pkg').dispatchEvent(new Event('change',{bubbles:true}))};
 function rec(){
