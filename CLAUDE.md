@@ -67,4 +67,5 @@ Styling: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` 
 - **Always test in a real browser before pushing** (playwright-cli, `--browser chrome`, local `http.server`), then push to `main`. Verify the change actually renders/works, not just that the file saved.
 - When told to do something and push, do the work, test it, then push without asking again. Keep this file updated as the owner gives new standing instructions.
 - Python 3.12 is installed (`python`, or full path `%LOCALAPPDATA%\Programs\Python\Python312\python.exe` if PATH is stale); no ffmpeg. `python -m http.server` works for local testing. Use `uv run --with <pkg> python ...` for one-off scripts (e.g. `opencv-python-headless` to grab a video frame for a thumb).
+- **Compress new images**: convert dropped photos to `.webp` (quality ~80, via `uv run --with pillow python`) whenever that makes the file smaller, delete the original jpg/png, and compress oversized files too. Rename to clean names.
 - Video cards need a `thumb` image plus `video` (.mp4); rename dropped files to clean names (no spaces/parens).
