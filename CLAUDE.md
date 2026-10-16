@@ -8,6 +8,7 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 |---|---|
 | `index.html` | Public site (~90 KB, single file: CSS, SVG sprites, markup, JS all inline) |
 | `reviews.html` | Public customer reviews page (same CSS/sprites/header copied from `index.html`). Lists reviews via RPC `get_reviews`, "Leave a review" form posts to `submit_review` |
+| `gallery.html` | Public gallery page: every photo/video as a tile grid with the same lightbox as the homepage, blurred `images/admin-bg.jpg` background. Has its **own copy** of the `GALLERY` array (add photos here too; some photos are gallery-page-only) |
 | `supabase/reviews.sql` | `reviews` table + `get_reviews` / `submit_review` RPCs. Reviews start `pending` and show only once approved in the admin Reviews tab |
 | `admin.html` | Private admin panel (`noindex`), single file. Supabase email/password login, manage bookings and days off |
 | `supabase/days_off.sql` | Idempotent SQL for the `blocked_days` table, RPCs and the booking trigger. Run by hand in the Supabase SQL Editor |
@@ -60,3 +61,10 @@ Styling: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` 
 - User-supplied text going into `innerHTML` in admin must go through `esc()`.
 - Business contact info (phone, email) is hard-coded in `index.html` (`linkUp()`, error strings, footer); grep before changing.
 - Supabase URL/key are duplicated in both files; update both together.
+
+## Workflow rules (from the owner)
+
+- **Always test in a real browser before pushing** (playwright-cli, `--browser chrome`, local `http.server`), then push to `main`. Verify the change actually renders/works, not just that the file saved.
+- When told to do something and push, do the work, test it, then push without asking again. Keep this file updated as the owner gives new standing instructions.
+- No system Python/ffmpeg: use `uv run --with <pkg> python ...` for one-off scripts (e.g. `opencv-python-headless` to grab a video frame for a thumb).
+- Video cards need a `thumb` image plus `video` (.mp4); rename dropped files to clean names (no spaces/parens).
