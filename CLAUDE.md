@@ -30,7 +30,7 @@ Inline `<script>` blocks, in order:
    - `D` = vehicle makes/models string; each model ends in a size code (`s` sedan, `u`, `t` truck, `x` SUV, `c` coupe) mapped to base price via `R`. `rec()` recommends a star count from it.
    - `sync()` recomputes the estimate, deposit ($150 per service) and summary chips on any change.
    - `need()` / `flag()` do required-field validation (`NM` holds the field labels).
-   - Submit: builds a text summary, POSTs to Supabase RPC `create_booking_request`, then also POSTs the form to Formspree (`FORMSPREE`). Success if either works. If both fail the user gets SMS / email / copy fallback buttons.
+   - Submit: builds a text summary, POSTs to Supabase RPC `create_booking_request`, then also POSTs the form to FormSubmit.co (`FORMSPREE` const, AJAX endpoint; no submission limit). Success if either works. If both fail the user gets SMS / email / copy fallback buttons.
 3. **Calendar** — Month grid (`cal()`); disabled = past/today, Sundays, `BLOCKED` array, or `taken` set. `loadTaken()` fills `taken` from RPCs `get_taken_days` (approved bookings, 120 days) and `get_blocked_days` (admin days off, ~1 year). Fails silently if Supabase is unreachable.
 4. **Starfield** canvas hero animation (respects `prefers-reduced-motion`).
 
@@ -66,5 +66,5 @@ Styling: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` 
 
 - **Always test in a real browser before pushing** (playwright-cli, `--browser chrome`, local `http.server`), then push to `main`. Verify the change actually renders/works, not just that the file saved.
 - When told to do something and push, do the work, test it, then push without asking again. Keep this file updated as the owner gives new standing instructions.
-- No system Python/ffmpeg: use `uv run --with <pkg> python ...` for one-off scripts (e.g. `opencv-python-headless` to grab a video frame for a thumb).
+- Python 3.12 is installed (`python`, or full path `%LOCALAPPDATA%\Programs\Python\Python312\python.exe` if PATH is stale); no ffmpeg. `python -m http.server` works for local testing. Use `uv run --with <pkg> python ...` for one-off scripts (e.g. `opencv-python-headless` to grab a video frame for a thumb).
 - Video cards need a `thumb` image plus `video` (.mp4); rename dropped files to clean names (no spaces/parens).
