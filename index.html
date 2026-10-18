@@ -97,7 +97,6 @@ aside h3{margin:0;font:600 14px var(--body);color:#b9aed1}
 .done{background:var(--card);border:1px solid var(--vio);border-radius:14px;padding:clamp(20px,4vw,36px)}
 .done h3{font:700 24px var(--head);letter-spacing:-.03em;margin:0 0 8px}
 .done textarea{min-height:190px;margin:14px 0;font-size:14px}
-.pnow{margin:18px 0 0}.pnow .btn{display:block;text-align:center;font-size:17px}.pnow p{color:var(--mute);font-size:14px;margin:10px 0 0}
 .done .acts{display:flex;gap:10px;flex-wrap:wrap}
 .btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .btn.alt:hover{background:var(--soft)}
@@ -621,7 +620,6 @@ const GALLERY=[
     <div class="done" id="done" hidden>
       <h3 id="dh">Request received</h3>
       <p id="dp">Thanks for reaching out to EZ CUSTOMZ. We'll be in touch to talk through your build.</p>
-      <div class="pnow" id="pnow" hidden><a class="btn" id="pnl" href="#">Pay deposit now</a><p id="pnt"></p></div>
       <div id="fb" hidden>
       <textarea id="msg" aria-label="Quote request message"></textarea>
       <div class="acts">
@@ -642,7 +640,7 @@ const GALLERY=[
       <div class="ln"><span>Services</span><b id="pl">Not selected</b></div>
       <div class="ln"><span>Selected options</span><b id="ol">&mdash;</b></div>
       <p class="fine">Final pricing is subject to review. Vehicle condition and configuration can affect the final quote.</p>
-      <div class="dep"><b id="dep">$150 down to schedule</b><span id="dept">$150 per service selected. Pay it securely online right after you submit to lock in your date. It comes out of your total cost. <a href="/terms.html">Deposit terms</a></span></div>
+      <div class="dep"><b id="dep">$150 down to schedule</b><span id="dept">$150 per service selected. Once we approve your quote, we'll email you a secure link to pay your deposit and lock in your date. It comes out of your total cost. <a href="/terms.html">Deposit terms</a></span></div>
       <div class="reach">Questions? Talk to a real person.
         <a href="tel:2256154554">225.615.4554</a>
         <a href="mailto:hunteraucoin12@gmail.com">hunteraucoin12@gmail.com</a></div>
@@ -713,7 +711,7 @@ function sync(){
   $('pl').textContent=it.length?it.join(' + '):'Not selected';
   $('ol').textContent=opt.length?opt.join(', '):st&&$('pkg').value?'Base package':'\u2014';  const n=svc();
   $('dep').textContent='$'+(150*(n||1)).toLocaleString()+' down to schedule';
-  $('dept').textContent='$150 per service selected'+(n>1?' ('+n+' services)':'')+(has('Speaker box / rack')?'. Speaker builds are quoted first, then we\'ll send you a secure link to pay your deposit and lock in your date.':'. Pay it securely online right after you submit to lock in your date.')+' It comes out of your total cost.';
+  $('dept').textContent='$150 per service selected'+(n>1?' ('+n+' services)':'')+'. Once we approve your quote, we\'ll email you a secure link to pay your deposit and lock in your date. It comes out of your total cost.';
 }
 function svc(){
   const u=$('up').value.toLowerCase();let n=picks().length;
@@ -767,13 +765,11 @@ $('qf').addEventListener('submit',async e=>{
   $('msg').value=L.join('\n');$('sum').value=$('msg').value;
   linkUp();
   const btn=e.submitter;if(btn)btn.disabled=true;
-  let booked=false,pay=null;
+  let booked=false;
   if(SB_ON){
     try{
       const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/create_booking_request',{method:'POST',headers:SB,body:JSON.stringify({p_date:iso(sel),p_name:$('nm').value,p_phone:$('ph').value,p_email:$('em').value,p_service:picks().join(' + '),p_selections:$('msg').value})});
-      if(r.ok){booked=true; // offer the deposit right away (amount set by the database; null for speaker builds or if the day just went)
-        const id=await r.json().catch(()=>null);
-        if(id)pay=await fetch(SUPABASE_URL+'/rest/v1/rpc/start_instant_deposit',{method:'POST',headers:SB,body:JSON.stringify({p_booking_id:id})}).then(x=>x.ok?x.json():null).catch(()=>null)}else{
+      if(r.ok)booked=true;else{
         const j=await r.json().catch(()=>({})),c=j.message||'';
         const t={slot_taken:'Sorry, that day was just booked. Please pick another day.',day_blocked:"Sorry, we're not available that day. Please pick another day.",too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
         if(t){if(btn)btn.disabled=false;if(c==='slot_taken'||c==='day_blocked'){sel=null;pick();await loadTaken()}$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});return}
@@ -785,13 +781,8 @@ $('qf').addEventListener('submit',async e=>{
   ok=ok||booked;
   if(btn)btn.disabled=false;
   $('dh').textContent=ok?'Request received':"We couldn't send that just yet";
-  $('dp').textContent=ok?"Thanks for reaching out to EZ CUSTOMZ. We'll be in touch to talk through your build.":'Send it to us by text or email instead, or call 225.615.4554.';
+  $('dp').textContent=ok?"Thanks for reaching out to EZ CUSTOMZ. We'll review your quote, and once it's approved we'll email you a secure link to pay your deposit and lock in your date.":'Send it to us by text or email instead, or call 225.615.4554.';
   $('fb').hidden=ok;
-  $('pnow').hidden=!(pay&&pay.pay_token);
-  if(pay&&pay.pay_token){const d='$'+(pay.deposit_cents/100).toLocaleString();
-    $('dp').textContent="Thanks for reaching out to EZ CUSTOMZ. Pay your deposit now to lock in "+$('pd').value+", or wait and we'll follow up to talk through your build.";
-    $('pnl').href='pay.html?t='+pay.pay_token;$('pnl').textContent='Pay '+d+' deposit now';
-    $('pnt').textContent="We're holding your date for 2 hours. The deposit comes out of your total. You'll review our deposit terms before paying."}
   $('qf').hidden=true;$('done').hidden=false;$('done').scrollIntoView({block:'start'});
 });
 function linkUp(){

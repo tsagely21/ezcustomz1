@@ -28,7 +28,7 @@ pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);borde
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.tabs button{flex:1;min-width:120px}
 .tabs button[aria-selected=true]{background:var(--vio);border-color:var(--vio);color:#fff}
 .cnl{color:#e0a030;border-color:#e0a030}.note{color:var(--mute);font-size:14px;margin:0 0 12px}
-.msg{color:var(--err);min-height:1.4em;margin:6px 0}.empty{color:var(--mute);text-align:center;padding:40px 0}
+.msg{color:var(--err);min-height:1.4em;margin:6px 0}.msg.ok{color:var(--ok);font-weight:600}.chk{display:flex;gap:8px;align-items:center;margin:4px 0 8px;font-size:14px;color:var(--mute)}.box .chk input{width:auto}.empty{color:var(--mute);text-align:center;padding:40px 0}
 .ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.ch button{width:44px;padding:8px 0}
 .og{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.og span{text-align:center;font-size:12px;color:var(--mute)}
 .od{aspect-ratio:1;padding:0;position:relative;font-weight:600}.od:disabled{opacity:.3;cursor:default}
@@ -118,6 +118,7 @@ a.sx{color:var(--vio)}.mono{font:12px ui-monospace,Menlo,monospace;word-break:br
 /* ===== PASTE YOUR SUPABASE VALUES HERE (Project Settings > API). The anon key is public by design. NEVER paste the service_role key. ===== */
 const SUPABASE_URL='https://umvdxjnhzehcoujrishh.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
+const FORMSUBMIT='https://formsubmit.co/ajax/hunteraucoin12@gmail.com'; // same inbox as the quote form (index.html FORMSPREE)
 /* ============================================================================================================================== */
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let token=sessionStorage.getItem('ezt')||'';
@@ -162,7 +163,18 @@ function money(b){if(b.estimate_cents==null)return'';const p=b.deposit_paid_cent
 const linkForm=(b,est,dep,lbl)=>`<form class="box" data-f="link" data-id="${b.id}"><b>${lbl}</b>
   <div class="rr"><label>Estimated total ($)<input name="e" inputmode="decimal" required value="${esc(dol(est))}"></label><label>Deposit ($)<input name="d" inputmode="decimal" required value="${esc(dol(dep))}"></label>
   <label>Hold the day for<select name="h"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label></div>
+  <label class="chk"><input type="checkbox" name="m" checked> Email the link to ${esc(b.email)}</label>
   <button class="primary full">${b.pay_status==='awaiting'?'Update amounts and restart the hold':'Approve and create deposit link'}</button></form>`;
+// Emails the customer their pay link through the site's FormSubmit inbox: the customer gets the autoresponse, the owner gets a copy as a record.
+async function mailLink(b){const l=location.origin+'/pay.html?t='+b.pay_token,v=veh(b);
+  const t=[`Hi ${b.name.split(' ')[0]},`,'',`Good news: your EZ CUSTOMZ quote is approved!`,'',...(v?[`Vehicle: ${v}`]:[]),`Service: ${b.service}`,`Appointment date: ${fmtD(b.slot_date)}`,
+    `Estimated total: ${usd(b.estimate_cents)}`,`Deposit to lock in your date: ${usd(b.deposit_cents)} (comes out of your total)`,'',
+    `Pay your deposit securely here (you'll review our Deposit & Payment Terms first):`,l,'',
+    `We're holding your date until ${fmtT(b.hold_until)} Central. After that it may be offered to someone else.`,'','Questions? Call or text 225.615.4554.','EZ CUSTOMZ, Baton Rouge, Louisiana'].join('\n');
+  try{const r=await fetch(FORMSUBMIT,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
+      body:JSON.stringify({_subject:`Deposit link sent: ${b.name}, ${fmtD(b.slot_date)}`,_template:'table',_captcha:'false',name:b.name,email:b.email,
+        Deposit:usd(b.deposit_cents),'Estimated total':usd(b.estimate_cents),'Pay link':l,'Held until':fmtT(b.hold_until)+' Central',_autoresponse:t})});
+    const j=await r.json().catch(()=>({}));return r.ok&&String(j.success)!=='false'}catch(_){return false}}
 function share(b){const l=location.origin+'/pay.html?t='+b.pay_token,ph=(b.phone||'').replace(/[^\d+]/g,'');
   const t=`Hi ${b.name.split(' ')[0]}, your EZ CUSTOMZ quote is approved! Estimated total ${usd(b.estimate_cents)}. To lock in ${fmtD(b.slot_date)}, please review our deposit terms and pay your ${usd(b.deposit_cents)} deposit here: ${l} . We're holding the date until ${fmtT(b.hold_until)} Central.`;
   return `<div class="box"><b>Customer's deposit link</b><div class="lnk"><input readonly value="${esc(l)}" aria-label="Deposit link"><button type="button" data-x="copy" data-v="${esc(l)}">Copy link</button>
@@ -176,9 +188,10 @@ function actions(b){const A=(a,c,t)=>`<button class="${c}" data-a="${a}" data-id
   if(b.status==='approved')return `<form class="box" data-f="est" data-id="${b.id}"><b>Final price</b><div class="rr"><label>Adjusted total ($), only after the customer approves<input name="e" inputmode="decimal" required value="${esc(dol(b.estimate_cents))}"></label></div>
     <div class="acts"><button>Update total</button><button type="button" data-x="bal" data-id="${b.id}" data-v="${b.balance_paid_at?0:1}">${b.balance_paid_at?'Undo paid in full':'Mark balance paid'}</button></div></form>`+move(b)+`<div class="acts">${A('cancel_booking','cnl','Cancel booking')}${A('delete_booking','dec','Delete')}</div>`;
   return `<div class="acts">${A('delete_booking','dec','Delete')}</div>`}
+let RB={};
 async function load(){
-  $('am').textContent='';
-  try{const rows=await api(`/rest/v1/bookings?${Q[tab]}&order=slot_date.asc,created_at.asc`);
+  $('am').textContent='';$('am').className='msg';
+  try{const rows=await api(`/rest/v1/bookings?${Q[tab]}&order=slot_date.asc,created_at.asc`);RB={};rows.forEach(b=>RB[b.id]=b);
     $('list').innerHTML=rows.length?rows.map(b=>{const [tc,tt]=tagOf(b),v=veh(b);return `
     <article class="card">
       <div class="top"><div class="when">${esc(fmtD(b.slot_date))}</div><span class="tag ${tc}">${esc(tt)}</span></div>
@@ -207,7 +220,13 @@ $('list').onsubmit=e=>{e.preventDefault();const f=e.target,F=f.elements,id=f.dat
   if(f.dataset.f==='link'){const est=cents(F.e.value),dep=cents(F.d.value);
     if(!(est>=100&&est<=1e7))return $('am').textContent=ERR.bad_estimate;
     if(!(dep>=100&&dep<=est))return $('am').textContent=ERR.bad_deposit;
-    return act(btn,'admin_send_deposit_link',{p_id:id,p_estimate_cents:est,p_deposit_cents:dep,p_hold_hours:+F.h.value},'await')}
+    return (async()=>{btn.disabled=true;let r,err='',note='';
+      try{r=await rpc('admin_send_deposit_link',{p_id:id,p_estimate_cents:est,p_deposit_cents:dep,p_hold_hours:+F.h.value})}catch(x){err=x.message}
+      if(err){btn.disabled=false;$('am').textContent=err;return}
+      if(F.m.checked){const b={...RB[id],estimate_cents:est,deposit_cents:dep,pay_token:r.pay_token,hold_until:r.hold_until};btn.textContent='Emailing the customer…';
+        note=await mailLink(b)?`Deposit link emailed to ${b.email}.`:`Saved, but the email didn't go through. Use Copy link, Text it or Email it below.`}
+      setTab('await');$('list').hidden=false;await load();
+      if(note){$('am').textContent=note;$('am').className=/^Deposit link emailed/.test(note)?'msg ok':'msg'}})()}
   if(f.dataset.f==='est'){const est=cents(F.e.value);if(!(est>=100&&est<=1e7))return $('am').textContent=ERR.bad_estimate;return act(btn,'admin_set_estimate',{p_id:id,p_estimate_cents:est})}
   if(f.dataset.f==='move'){if(!confirm('Move this booking to '+fmtD(F.d.value)+'?'))return;return act(btn,'admin_reschedule',{p_id:id,p_date:F.d.value},'approved')}};
 

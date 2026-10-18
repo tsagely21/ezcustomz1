@@ -184,29 +184,8 @@ end $$;
 drop trigger if exists bookings_keep_day_on_cancel on public.bookings;
 create trigger bookings_keep_day_on_cancel after update on public.bookings for each row execute function public.keep_day_on_cancel();
 
--- Pay right after submitting: the quote page calls this with the id create_booking_request just returned.
--- Standard deposit ($150 per service) computed here, never sent by the browser. The day is held for 2 hours.
--- Returns null (site falls back to "we'll review it") for speaker builds (no price yet), old/handled requests, or a taken day.
-create or replace function public.start_instant_deposit(p_booking_id uuid)
-returns jsonb language plpgsql security definer set search_path = public as $$
-declare b public.bookings; dep int; est int;
-begin
-  select * into b from public.bookings where id = p_booking_id for update;
-  if not found or b.status <> 'pending' or b.pay_status <> 'none' or b.created_at < now() - interval '30 minutes' then return null; end if;
-  if coalesce(b.service, '') = '' or b.service ~* 'speaker' then return null; end if;
-  dep := 15000 * array_length(regexp_split_to_array(b.service, '\s*\+\s*'), 1);
-  est := replace(substring(b.selections from 'Estimate: \$([0-9,]{1,9})'), ',', '')::int * 100;
-  if est is null or est < dep or est > 10000000 then return null; end if;
-  perform public.lock_day(b.slot_date);
-  if exists (select 1 from public.bookings where slot_date = b.slot_date and status = 'approved')
-     or exists (select 1 from public.blocked_days where day = b.slot_date)
-     or public.day_held(b.slot_date, b.id) then return null; end if;
-  update public.bookings set estimate_cents = est, deposit_cents = dep, pay_status = 'awaiting',
-    hold_until = now() + interval '2 hours', link_sent_at = now(),
-    pay_token = replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '')
-  where id = b.id returning * into b;
-  return jsonb_build_object('pay_token', b.pay_token, 'deposit_cents', dep, 'hold_until', b.hold_until);
-end $$;
+-- (An earlier version let customers pay right after submitting; the owner now reviews every quote first.)
+drop function if exists public.start_instant_deposit(uuid);
 
 -- ---------- admin ----------
 -- Approve a quote: set the price and deposit, hold the day, and get the customer's pay link token. Re-run to change amounts or extend the hold.
@@ -449,8 +428,6 @@ revoke execute on function public.get_deposit_request(text) from public;
 grant execute on function public.get_held_days(date, date) to anon, authenticated;
 grant execute on function public.get_deposit_terms() to anon, authenticated;
 grant execute on function public.get_deposit_request(text) to anon, authenticated;
-revoke execute on function public.start_instant_deposit(uuid) from public;
-grant execute on function public.start_instant_deposit(uuid) to anon, authenticated;
 
 revoke execute on function public.admin_send_deposit_link(uuid, int, int, int) from anon, public;
 revoke execute on function public.admin_release_hold(uuid) from anon, public;
