@@ -8,7 +8,7 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 |---|---|
 | `index.html` | Public site (~90 KB, single file: CSS, SVG sprites, markup, JS all inline) |
 | `reviews.html` | Public customer reviews page (same CSS/sprites/header copied from `index.html`). Lists reviews via RPC `get_reviews`, "Leave a review" form posts to `submit_review` |
-| `gallery.html` | Public gallery page: every photo/video as a tile grid with the same lightbox as the homepage, blurred `images/admin-bg.jpg` background. Has its **own copy** of the `GALLERY` array (add photos here too; some photos are gallery-page-only) |
+| `gallery.html` | Public gallery page: every photo/video as a tile grid with the same lightbox as the homepage, blurred `images/admin-bg.webp` background. Has its **own copy** of the `GALLERY` array (add photos here too; some photos are gallery-page-only) |
 | `supabase/reviews.sql` | `reviews` table + `get_reviews` / `submit_review` RPCs. Reviews start `pending` and show only once approved in the admin Reviews tab |
 | `admin.html` | Private admin panel (`noindex`), single file. Supabase email/password login, manage bookings and days off |
 | `supabase/days_off.sql` | Idempotent SQL for the `blocked_days` table, RPCs and the booking trigger. Run by hand in the Supabase SQL Editor |
