@@ -640,7 +640,7 @@ const GALLERY=[
       <div class="ln"><span>Services</span><b id="pl">Not selected</b></div>
       <div class="ln"><span>Selected options</span><b id="ol">&mdash;</b></div>
       <p class="fine">Final pricing is subject to review. Vehicle condition and configuration can affect the final quote.</p>
-      <div class="dep"><b id="dep">$150 down to schedule</b><span id="dept">$150 per service selected. Your deposit comes out of your total cost and is for scheduling after your quote is reviewed.</span></div>
+      <div class="dep"><b id="dep">$150 down to schedule</b><span id="dept">$150 per service selected. Once we approve your quote, we'll send you a secure link to pay your deposit and lock in your date. It comes out of your total cost. <a href="/terms.html">Deposit terms</a></span></div>
       <div class="reach">Questions? Talk to a real person.
         <a href="tel:2256154554">225.615.4554</a>
         <a href="mailto:hunteraucoin12@gmail.com">hunteraucoin12@gmail.com</a></div>
@@ -654,7 +654,7 @@ const GALLERY=[
   <h2>Let's make your interior unforgettable.</h2>
   <a href="https://www.instagram.com/ezcustomz4" target="_blank" rel="noopener noreferrer">Follow the builds @ezcustomz4</a>
 </section>
-<footer><span class="foot-sk" aria-hidden="true"><svg><use href="#i-skull"/></svg><svg><use href="#i-pumpkin"/></svg><svg><use href="#i-skull"/></svg></span><span>&copy; 2026 EZ CUSTOMZ, Baton Rouge, Louisiana</span><span>Custom installs, built around you.</span><a href="https://www.tiktok.com/@two_ot_hunna" target="_blank" rel="noopener noreferrer">TikTok @two_ot_hunna</a></footer>
+<footer><span class="foot-sk" aria-hidden="true"><svg><use href="#i-skull"/></svg><svg><use href="#i-pumpkin"/></svg><svg><use href="#i-skull"/></svg></span><span>&copy; 2026 EZ CUSTOMZ, Baton Rouge, Louisiana</span><span>Custom installs, built around you.</span><a href="/terms.html">Deposit &amp; Payment Terms</a><a href="https://www.tiktok.com/@two_ot_hunna" target="_blank" rel="noopener noreferrer">TikTok @two_ot_hunna</a></footer>
 
 <script>
 const FORMSPREE='https://formsubmit.co/ajax/hunteraucoin12@gmail.com';
@@ -711,7 +711,7 @@ function sync(){
   $('pl').textContent=it.length?it.join(' + '):'Not selected';
   $('ol').textContent=opt.length?opt.join(', '):st&&$('pkg').value?'Base package':'\u2014';  const n=svc();
   $('dep').textContent='$'+(150*(n||1)).toLocaleString()+' down to schedule';
-  $('dept').textContent='$150 per service selected'+(n>1?' ('+n+' services)':'')+'. Your deposit comes out of your total cost and is for scheduling after your quote is reviewed.';
+  $('dept').textContent='$150 per service selected'+(n>1?' ('+n+' services)':'')+'. Once we approve your quote, we\'ll send you a secure link to pay your deposit and lock in your date. It comes out of your total cost.';
 }
 function svc(){
   const u=$('up').value.toLowerCase();let n=picks().length;
@@ -807,8 +807,8 @@ async function loadTaken(){
   if(!SB_ON)return;
   try{const f=iso(minD),t=iso(new Date(minD.getFullYear(),minD.getMonth(),minD.getDate()+120)),t2=iso(new Date(minD.getFullYear()+1,minD.getMonth(),minD.getDate()));
     const rpc=(n,b)=>fetch(SUPABASE_URL+'/rest/v1/rpc/'+n,{method:'POST',headers:SB,body:JSON.stringify(b)}).then(r=>r.ok?r.json():null).catch(()=>null);
-    const [bk,off]=await Promise.all([rpc('get_taken_days',{from_date:f,to_date:t}),rpc('get_blocked_days',{from_date:f,to_date:t2})]); // off = admin days off
-    if(!bk&&!off)return;taken.clear();(bk||[]).forEach(x=>taken.add(x.slot_date));(off||[]).forEach(x=>taken.add(x.day));
+    const [bk,off,hd]=await Promise.all([rpc('get_taken_days',{from_date:f,to_date:t}),rpc('get_blocked_days',{from_date:f,to_date:t2}),rpc('get_held_days',{from_date:f,to_date:t2})]); // off = admin days off, hd = held for a deposit
+    if(!bk&&!off&&!hd)return;taken.clear();(bk||[]).forEach(x=>taken.add(x.slot_date));(off||[]).forEach(x=>taken.add(x.day));(hd||[]).forEach(x=>taken.add(x.day));
   }catch(_){}
   if(sel&&taken.has(iso(sel))){sel=null;pick();return} // chosen day just became unavailable
   cal();

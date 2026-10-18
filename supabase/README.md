@@ -8,6 +8,8 @@ The site's data lives in a Supabase project (Postgres + Auth). The front end onl
 |---|---|
 | `days_off.sql` | `blocked_days` table, days-off functions, and the trigger that rejects bookings on blocked days |
 | `hardening.sql` | Replaces `create_booking_request` with input length limits and spam caps |
+| `deposits.sql` | Stripe deposits: payment fields on `bookings`, versioned terms, agreement records, Stripe event log, date holds. See `STRIPE_SETUP.md` |
+| `functions/` | Edge Functions `create-checkout` and `stripe-webhook` (Stripe secret key lives in Edge Function secrets) |
 | `reviews.sql` | `reviews` table (`pending` / `approved` / `rejected`), public `get_reviews` (approved only) and `submit_review` (length limits, spam caps), admin `admin_list_reviews`, `set_review_status`, `delete_review` |
 
 Run each file once in **Dashboard > SQL Editor**. They are safe to re-run.
