@@ -4,7 +4,8 @@
 // Secrets: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, optional OWNER_EMAIL, SITE_URL, RESEND_API_KEY + RESEND_FROM.
 import Stripe from 'npm:stripe@22.6.2';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', { httpClient: Stripe.createFetchHttpClient() });
+// Only used for signature checks (no API calls), so a placeholder keeps the function booting if the key secret is missing.
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || 'sk_unset', { httpClient: Stripe.createFetchHttpClient() });
 const WH = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
 const SITE = (Deno.env.get('SITE_URL') ?? 'https://ezcustomz.co').replace(/\/$/, '');
 const OWNER = Deno.env.get('OWNER_EMAIL') ?? 'hunteraucoin12@gmail.com';
@@ -84,6 +85,7 @@ async function confirmed(p: any) {
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('method not allowed', { status: 405 });
+  if (!WH) { console.error('STRIPE_WEBHOOK_SECRET is not set'); return new Response('not configured', { status: 500 }); }
   const body = await req.text();
   let ev: Stripe.Event;
   try {

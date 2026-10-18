@@ -10,7 +10,8 @@ const LIVE_OK = Deno.env.get('STRIPE_ALLOW_LIVE') === 'true';
 const TAX = Deno.env.get('STRIPE_AUTOMATIC_TAX') === 'true';
 const SB_URL = Deno.env.get('SUPABASE_URL')!;
 const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const stripe = new Stripe(KEY, { httpClient: Stripe.createFetchHttpClient() });
+// Stripe's SDK throws on an empty key, so only build it when the secret exists (otherwise every request 500s at boot).
+const stripe = KEY ? new Stripe(KEY, { httpClient: Stripe.createFetchHttpClient() }) : null!;
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type, apikey, authorization', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const out = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });

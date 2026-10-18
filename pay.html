@@ -132,7 +132,7 @@ $('cb').onchange=sync;
 const ERR={terms_not_accepted:'Please tick the box to agree to the Deposit & Payment Terms first.',terms_changed:'Our terms were just updated. Please read them again and tick the box.',
   terms_not_published:'Online deposits are not open yet. Please call or text 225.615.4554.',link_expired:'This link has expired. Please call or text 225.615.4554 for a new one.',
   already_paid:'This deposit has already been paid. Refreshing.',busy:'One moment, your checkout is already being prepared. Please try again in a few seconds.',
-  not_found:"This link isn't active anymore. Please call or text 225.615.4554.",live_disabled:'Online payments are paused right now. Please call or text 225.615.4554.'};
+  not_found:"This link isn't active anymore. Please call or text 225.615.4554.",live_disabled:'Online payments are paused right now. Please call or text 225.615.4554.',not_configured:'Online payments are not switched on yet. Please call or text 225.615.4554.'};
 $('ag').onsubmit=async e=>{e.preventDefault();const er=$('er');er.hidden=true;
   if(!$('cb').checked){er.textContent=ERR.terms_not_accepted;er.hidden=false;return}
   const b=$('go');b.disabled=true;b.textContent='Opening secure checkout…';let c='';
