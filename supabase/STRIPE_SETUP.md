@@ -71,9 +71,17 @@ The first FormSubmit email to a new address triggers an activation email; click 
 
 ## 8. Going live (only when you decide)
 
-1. Activate your Stripe account (business + bank details).
-2. Switch the Dashboard to live, repeat steps 2 and 5 in live mode (live webhook has its own signing secret).
-3. Update secrets: `STRIPE_SECRET_KEY=sk_live_...`, `STRIPE_WEBHOOK_SECRET=<live whsec>`, and `STRIPE_ALLOW_LIVE=true`.
-4. Do one real small deposit and refund it.
+1. **Activate your Stripe account**: Dashboard > switch off Test mode/Sandbox > **Activate payments**. Enter business details, your EIN or SSN, and the bank account for payouts. Wait until it says payments are enabled.
+2. **Live payment methods**: in live mode, Settings > Payment methods: Cards, Apple Pay, Google Pay on; Bank, Klarna, Affirm, Cash App off (live has its own settings).
+3. **Live webhook**: in live mode, redo step 5 (same URL, same 4 events). Copy the new live `whsec_...` (different from the test one).
+4. **Live key**: in live mode, Developers > API keys > Secret key (`sk_live_...`). Treat it like a bank password.
+5. **Supabase secrets** (Edge Functions > Secrets), replace/add:
+   - `STRIPE_SECRET_KEY` = `sk_live_...`
+   - `STRIPE_WEBHOOK_SECRET` = the live `whsec_...`
+   - `STRIPE_ALLOW_LIVE` = `true` (without it, live keys are refused)
+6. **Re-run `supabase/deposits.sql`** if it changed since you last ran it (safe to re-run).
+7. **Real test**: book a quote on ezcustomz.co with your own card, pay, check the admin panel and emails, then refund it in Stripe (Payments > the payment > Refund). Live Checkout says no "Sandbox" badge.
+
+Test bookings from sandbox mode stay in the admin panel (marked "test mode"); delete them before going live if you like.
 
 To pause online payments any time, delete `STRIPE_ALLOW_LIVE` (live) or the secret key.
