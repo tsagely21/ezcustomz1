@@ -19,7 +19,7 @@ Plain HTML, CSS and JavaScript. No framework, no build step, no dependencies.
 |---|---|
 | Hosting | GitHub Pages (custom domain via `CNAME`) |
 | Database, auth, booking logic | [Supabase](https://supabase.com) (Postgres with row-level security and RPC functions) |
-| Quote email fallback | [Formspree](https://formspree.io) |
+| Quote email fallback | [FormSubmit](https://formsubmit.co) |
 
 ## Project structure
 
