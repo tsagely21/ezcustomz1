@@ -8,7 +8,8 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 |---|---|
 | `index.html` | Public site (~90 KB, single file: CSS, SVG sprites, markup, JS all inline) |
 | `reviews.html` | Public customer reviews page (same CSS/sprites/header copied from `index.html`). Lists reviews via RPC `get_reviews`, "Leave a review" form posts to `submit_review` |
-| `gallery.html` | Public gallery page: every photo/video as a tile grid with the same lightbox as the homepage, blurred `images/admin-bg.webp` background. Has its **own copy** of the `GALLERY` array (add photos here too; some photos are gallery-page-only) |
+| `gallery.html` | Public gallery page: every photo/video as a tile grid with the same lightbox as the homepage, blurred `images/admin-bg.webp` background. Loads `get_gallery` (all non-hidden items); its own `GALLERY` array is only the offline fallback |
+| `supabase/gallery.sql` | `gallery_items` table (seeded from the old hard-coded arrays), public Storage bucket `gallery` (admin-only upload/delete policies, 50 MB/file), `get_gallery` + `admin_*_gallery_item` RPCs. `place`: `home` (homepage ribbon + gallery page), `gallery` (gallery page only), `hidden` (taken down) |
 | `supabase/reviews.sql` | `reviews` table + `get_reviews` / `submit_review` RPCs. Reviews start `pending` and show only once approved in the admin Reviews tab |
 | `admin.html` | Private admin panel (`noindex`), single file. Supabase email/password login, manage bookings and days off |
 | `supabase/days_off.sql` | Idempotent SQL for the `blocked_days` table, RPCs and the booking trigger. Run by hand in the Supabase SQL Editor |
@@ -29,7 +30,7 @@ The base tables, `bookings` RPCs and `is_admin()` are **not** in the repo (only 
 ## index.html layout
 
 Inline `<script>` blocks, in order:
-1. **Gallery** — `GALLERY` array near the top is the only thing to edit to add/remove cards (`label`, `note`, `img`, optional `thumb`/`alt`/`pos`). The rest is carousel + lightbox code. Section is `hidden` until it has items.
+1. **Gallery** — managed from admin > Gallery. On `DOMContentLoaded` it fetches `get_gallery`, keeps `place='home'`, and calls `galShow()`; the `GALLERY` array is only the fallback if Supabase fails (`label`, `note`, `img`, optional `thumb`/`video`/`alt`/`pos`). The rest is carousel + lightbox code. Section is `hidden` until it has items.
 2. **Quote form** (`#qf`) — Vehicle year/make/model, services (starlight / ambient / speaker), pricing, date, contact.
    - `D` = vehicle makes/models string; each model ends in a size code (`s` sedan, `u`, `t` truck, `x` SUV, `c` coupe) mapped to base price via `R`. `rec()` recommends a star count from it.
    - `sync()` recomputes the estimate, deposit ($150 per service) and summary chips on any change.
@@ -49,6 +50,7 @@ Styling: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` 
 - Tabs: Pending / Review confirmed / Declined-cancelled (query `bookings` by `status`) and **Days off** (calendar + range form).
 - **Reviews** tab: sub-filter Waiting / Live / Hidden (`pending` / `approved` / `rejected`) via `admin_list_reviews(p_status)`; actions `set_review_status(p_id,p_status)`, `delete_review(p_id)`. Tab label shows the waiting count.
 - Booking actions are RPCs taking `p_id`: `approve_booking`, `decline_booking`, `cancel_booking`, `delete_booking`. Days off: `admin_list_blocked_days`, `block_days(p_from,p_to,p_note)`, `unblock_day(p_day)`.
+- **Gallery** tab: upload photo (resized in-browser to webp 2000px + 900px thumb) or video (re-encoded in-browser to H.264 MP4 ≤1280px via canvas + `MediaRecorder` + WebAudio, real-time; `fixDur()` patches the fragmented MP4's duration; requires a vehicle picture or a grabbed frame as `thumb`). Files go to Storage `gallery/` with the admin JWT, then `admin_add_gallery_item`; list below reorders (`admin_move_gallery_item`), edits/takes down (`admin_update_gallery_item`), deletes (`admin_delete_gallery_item` returns Storage paths to erase). Repo-hosted seed items have empty `paths`.
 - `ERR` maps Postgres exception names (`slot_taken`, `not_admin`, ...) to user-facing text.
 
 ## Backend (Supabase, project `umvdxjnhzehcoujrishh`)
@@ -74,7 +76,7 @@ Styling: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` 
 - Dates are handled as `YYYY-MM-DD` strings via `iso()` / `isoD()`; display parsing uses `T12:00:00` to avoid timezone shifts.
 - User-supplied text going into `innerHTML` in admin must go through `esc()`.
 - Business contact info (phone, email) is hard-coded in `index.html` (`linkUp()`, error strings, footer); grep before changing.
-- Supabase URL/key are duplicated in both files; update both together.
+- Supabase URL/key are duplicated in every HTML file that uses them (index, admin, reviews, gallery, pay, terms); update all together.
 
 ## Workflow rules (from the owner)
 
