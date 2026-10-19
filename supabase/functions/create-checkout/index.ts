@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return out(405, { error: 'method_not_allowed' });
   if (!KEY) return out(500, { error: 'not_configured' });
-  if (KEY.startsWith('sk_live') && !LIVE_OK) return out(503, { error: 'live_disabled' });
+  if (/^(sk|rk)_live_/.test(KEY) && !LIVE_OK) return out(503, { error: 'live_disabled' }); // standard or restricted live key
 
   const { token, accepted, terms_version } = await req.json().catch(() => ({}));
   if (accepted !== true) return out(400, { error: 'terms_not_accepted' });
