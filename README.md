@@ -6,7 +6,8 @@ Website and booking system for [EZ CUSTOMZ](https://ezcustomz.co), a custom vehi
 
 - **Instant quote builder**: pick a vehicle, services and options and see a live price estimate and deposit.
 - **Booking calendar**: customers request a day; confirmed bookings and days off are greyed out automatically.
-- **Admin panel** (`/admin.html`): accept, decline, cancel or delete requests, and block days off, behind a secure login.
+- **Admin panel** (`/admin.html`): approve quotes with a price and deposit, send pay links, track payments and balances, manage terms and days off, behind a secure login.
+- **Stripe deposits** (`/pay.html`, `/terms.html`): customers accept the Deposit & Payment Terms, then pay through Stripe Checkout; a verified webhook confirms the booking and blocks the day. Setup: `supabase/STRIPE_SETUP.md`.
 - **Photo gallery**: swipeable carousel with a full-screen lightbox.
 - **Seasonal promotions**: sale pricing with an automatic end date.
 - **Accessible and responsive**: works on phones, supports light/dark mode and reduced motion.

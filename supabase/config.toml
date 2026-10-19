@@ -1,0 +1,13 @@
+# Used by `supabase functions deploy`. Both functions are public endpoints with their own checks
+# (pay-link token + terms acceptance; Stripe signature), so the gateway JWT check is off.
+project_id = "umvdxjnhzehcoujrishh"
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+# Checks the admin itself with is_admin(); off so the gateway doesn't reject newer Supabase token formats.
+[functions.send-deposit-link]
+verify_jwt = false

@@ -12,6 +12,10 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 | `supabase/reviews.sql` | `reviews` table + `get_reviews` / `submit_review` RPCs. Reviews start `pending` and show only once approved in the admin Reviews tab |
 | `admin.html` | Private admin panel (`noindex`), single file. Supabase email/password login, manage bookings and days off |
 | `supabase/days_off.sql` | Idempotent SQL for the `blocked_days` table, RPCs and the booking trigger. Run by hand in the Supabase SQL Editor |
+| `pay.html` | Customer deposit page (`?t=<64-hex token>`): quote summary, full Deposit & Payment Terms, required checkbox, then POST to Edge Function `create-checkout` and redirect to Stripe. `&s=done` polls `get_deposit_request` until the webhook confirms; never trusts the redirect |
+| `terms.html` | Public Deposit & Payment Terms, rendered from the live `deposit_terms` row (`get_deposit_terms`). Linked in every footer |
+| `supabase/deposits.sql` | Stripe deposits: payment columns on `bookings`, `deposit_terms`, `deposit_agreements`, `stripe_events`, holds/triggers, admin + service-role RPCs. Setup steps in `supabase/STRIPE_SETUP.md` |
+| `supabase/functions/` | Deno Edge Functions `create-checkout` and `stripe-webhook` (`npm:stripe@22.6.2`). Secrets live in Supabase, never in the repo |
 | `images/gallery/*.webp` | Gallery photos used by `GALLERY` in `index.html` |
 
 The base tables, `bookings` RPCs and `is_admin()` are **not** in the repo (only `days_off.sql` is); they live in the Supabase project.
@@ -53,6 +57,16 @@ Styling: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` 
 - Security is in the DB: RLS on, direct table access revoked, everything via `security definer` RPCs that check `is_admin()`. `get_blocked_days` returns dates only, notes stay admin-only.
 - `bookings` has a `before insert` trigger (`reject_blocked_booking`) raising `day_blocked`; the site surfaces `slot_taken`, `day_blocked`, `too_many_requests` errors.
 - Booking statuses: `pending`, `approved`, `declined`, `cancelled`. Approved bookings block the whole day publicly.
+
+## Deposits (Stripe)
+
+- Flow: request (`pending`/`pay_status=none`) -> admin `admin_send_deposit_link` sets `estimate_cents`, `deposit_cents`, `hold_until`, `pay_token` (`pending`/`awaiting`, day held via `get_held_days`) -> customer accepts terms on `pay.html` -> `create-checkout` -> Stripe -> `stripe-webhook` -> `deposit_mark_paid` (`approved`/`paid`).
+- The owner reviews every quote before any deposit (owner's call; an instant pay-after-quote button was tried and removed). On "Approve and create deposit link", admin `mailLink()` emails the customer the pay link: first via Edge Function `send-deposit-link` (Resend, checks `is_admin()` with the admin's JWT, BCCs the owner), falling back to FormSubmit `_autoresponse` (unreliable, often never arrives) when Resend isn't configured; checkbox "Email the link" is on by default for new approvals, but off when updating an existing hold (amounts/hold length), since the pay link doesn't change and the owner doesn't want customers re-emailed.
+- Cancelled/declined cards have a Restore dropdown -> `admin_restore_booking(p_id,p_to,p_date)`: back to Confirmed (any free date; removes the "Cancelled booking (...)" day-off) or New requests (only without a paid deposit). No automatic SMS (would need Twilio + 10DLC registration); "Text it" opens the phone's SMS app prefilled.
+- Only the signature-verified webhook confirms. `stripe_events` + `payment_intent_id` make it idempotent; `lock_day()` advisory lock + triggers (`bookings_reject_held`, `bookings_guard_held`) stop double booking. Late/duplicate payments become `pay_status='conflict'` for the owner.
+- Cancelling an approved booking copies the day into `blocked_days` (owner releases it in Days off). Refunds are done in the Stripe Dashboard; `charge.refunded` only records them.
+- Terms: published versions are immutable; each acceptance snapshots the exact text into `deposit_agreements`. Stripe's API rejects `payment_method_types` now: methods come from Dashboard settings.
+- Test mode only until the `STRIPE_ALLOW_LIVE=true` secret is set. Emails: owner via FormSubmit, customer via Resend if configured else FormSubmit `_autoresponse`.
 
 ## Conventions / gotchas
 
