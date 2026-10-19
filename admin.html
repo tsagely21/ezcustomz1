@@ -163,7 +163,7 @@ function money(b){if(b.estimate_cents==null)return'';const p=b.deposit_paid_cent
 const linkForm=(b,est,dep,lbl)=>`<form class="box" data-f="link" data-id="${b.id}"><b>${lbl}</b>
   <div class="rr"><label>Estimated total ($)<input name="e" inputmode="decimal" required value="${esc(dol(est))}"></label><label>Deposit ($)<input name="d" inputmode="decimal" required value="${esc(dol(dep))}"></label>
   <label>Hold the day for<select name="h"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label></div>
-  <label class="chk"><input type="checkbox" name="m" checked> Email the link to ${esc(b.email)}</label>
+  <label class="chk"><input type="checkbox" name="m"${b.pay_status==='awaiting'?'':' checked'}> ${b.pay_status==='awaiting'?'Email the customer again (their link stays the same)':'Email the link to '+esc(b.email)}</label>
   <label class="nt">Note to the customer (optional, goes in the email)<textarea name="n" rows="3" maxlength="1500" placeholder="e.g. Thanks for choosing us! Please arrive by 9 AM and bring your spare key."></textarea></label>
   <button class="primary full">${b.pay_status==='awaiting'?'Update amounts and restart the hold':'Approve and create deposit link'}</button></form>`;
 // Emails the customer their pay link through the site's FormSubmit inbox: the customer gets the autoresponse, the owner gets a copy as a record.
