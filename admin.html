@@ -174,7 +174,8 @@ async function mailLink(b){const l=location.origin+'/pay.html?t='+b.pay_token,v=
   try{const r=await fetch(FORMSUBMIT,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
       body:JSON.stringify({_subject:`Deposit link sent: ${b.name}, ${fmtD(b.slot_date)}`,_template:'table',_captcha:'false',name:b.name,email:b.email,
         Deposit:usd(b.deposit_cents),'Estimated total':usd(b.estimate_cents),'Pay link':l,'Held until':fmtT(b.hold_until)+' Central',_autoresponse:t})});
-    const j=await r.json().catch(()=>({}));return r.ok&&String(j.success)!=='false'}catch(_){return false}}
+    const j=await r.json().catch(()=>({}));if(r.ok&&String(j.success)!=='false')return true;
+    console.error('FormSubmit',r.status,j);return 'FormSubmit said: '+(j.message||'HTTP '+r.status)}catch(x){console.error('FormSubmit',x);return 'Could not reach FormSubmit ('+x.message+')'}}
 function share(b){const l=location.origin+'/pay.html?t='+b.pay_token,ph=(b.phone||'').replace(/[^\d+]/g,'');
   const t=`Hi ${b.name.split(' ')[0]}, your EZ CUSTOMZ quote is approved! Estimated total ${usd(b.estimate_cents)}. To lock in ${fmtD(b.slot_date)}, please review our deposit terms and pay your ${usd(b.deposit_cents)} deposit here: ${l} . We're holding the date until ${fmtT(b.hold_until)} Central.`;
   return `<div class="box"><b>Customer's deposit link</b><div class="lnk"><input readonly value="${esc(l)}" aria-label="Deposit link"><button type="button" data-x="copy" data-v="${esc(l)}">Copy link</button>
@@ -224,7 +225,7 @@ $('list').onsubmit=e=>{e.preventDefault();const f=e.target,F=f.elements,id=f.dat
       try{r=await rpc('admin_send_deposit_link',{p_id:id,p_estimate_cents:est,p_deposit_cents:dep,p_hold_hours:+F.h.value})}catch(x){err=x.message}
       if(err){btn.disabled=false;$('am').textContent=err;return}
       if(F.m.checked){const b={...RB[id],estimate_cents:est,deposit_cents:dep,pay_token:r.pay_token,hold_until:r.hold_until};btn.textContent='Emailing the customer…';
-        note=await mailLink(b)?`Deposit link emailed to ${b.email}.`:`Saved, but the email didn't go through. Use Copy link, Text it or Email it below.`}
+        const m=await mailLink(b);note=m===true?`Deposit link emailed to ${b.email}.`:`Saved, but the email didn't go through (${m}). Use Copy link, Text it or Email it below.`}
       setTab('await');$('list').hidden=false;await load();
       if(note){$('am').textContent=note;$('am').className=/^Deposit link emailed/.test(note)?'msg ok':'msg'}})()}
   if(f.dataset.f==='est'){const est=cents(F.e.value);if(!(est>=100&&est<=1e7))return $('am').textContent=ERR.bad_estimate;return act(btn,'admin_set_estimate',{p_id:id,p_estimate_cents:est})}
