@@ -97,6 +97,7 @@ aside h3{margin:0;font:600 14px var(--body);color:#b9aed1}
 .done{background:var(--card);border:1px solid var(--vio);border-radius:14px;padding:clamp(20px,4vw,36px)}
 .done h3{font:700 24px var(--head);letter-spacing:-.03em;margin:0 0 8px}
 .done textarea{min-height:190px;margin:14px 0;font-size:14px}
+.look{background:var(--soft);border-left:4px solid var(--vio);border-radius:10px;padding:14px 16px;margin:16px 0 0}.look b{display:block;margin-bottom:4px}.look span{font-weight:700;color:var(--vio-d);white-space:nowrap}
 .done .acts{display:flex;gap:10px;flex-wrap:wrap}
 .btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .btn.alt:hover{background:var(--soft)}
@@ -620,6 +621,7 @@ const GALLERY=[
     <div class="done" id="done" hidden>
       <h3 id="dh">Request received</h3>
       <p id="dp">Thanks for reaching out to EZ CUSTOMZ. We'll be in touch to talk through your build.</p>
+      <p class="look" id="look" hidden><b>Look out for an email from us.</b> Once your quote is approved, we'll send your secure deposit link from <span>bookings@ezcustomz.co</span>. Pay it to lock in your date. Don't see it? Check your spam or promotions folder.</p>
       <div id="fb" hidden>
       <textarea id="msg" aria-label="Quote request message"></textarea>
       <div class="acts">
@@ -782,7 +784,7 @@ $('qf').addEventListener('submit',async e=>{
   if(btn)btn.disabled=false;
   $('dh').textContent=ok?'Request received':"We couldn't send that just yet";
   $('dp').textContent=ok?"Thanks for reaching out to EZ CUSTOMZ. We'll review your quote, and once it's approved we'll email you a secure link to pay your deposit and lock in your date.":'Send it to us by text or email instead, or call 225.615.4554.';
-  $('fb').hidden=ok;
+  $('fb').hidden=ok;$('look').hidden=!ok;
   $('qf').hidden=true;$('done').hidden=false;$('done').scrollIntoView({block:'start'});
 });
 function linkUp(){
