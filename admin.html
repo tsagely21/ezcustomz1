@@ -201,11 +201,11 @@ function actions(b){const A=(a,c,t)=>`<button class="${c}" data-a="${a}" data-id
 let RB={};
 async function load(){
   $('am').textContent='';$('am').className='msg';
-  try{const rows=await api(`/rest/v1/bookings?${Q[tab]}&order=slot_date.asc,created_at.asc`);RB={};rows.forEach(b=>RB[b.id]=b);
+  try{const rows=await api(`/rest/v1/bookings?${Q[tab]}&order=${tab==='pending'?'created_at.desc':'slot_date.asc,created_at.asc'}`);RB={};rows.forEach(b=>RB[b.id]=b); // new requests: newest first
     $('list').innerHTML=rows.length?rows.map(b=>{const [tc,tt]=tagOf(b),v=veh(b);return `
     <article class="card">
       <div class="top"><div class="when">${esc(fmtD(b.slot_date))}</div><span class="tag ${tc}">${esc(tt)}</span></div>
-      <dl><dt>Name</dt><dd>${esc(b.name)}</dd><dt>Phone</dt><dd><a href="tel:${esc(b.phone)}" style="color:inherit">${esc(b.phone)}</a></dd>
+      <dl><dt>Submitted</dt><dd>${esc(fmtT(b.created_at))} Central</dd><dt>Name</dt><dd>${esc(b.name)}</dd><dt>Phone</dt><dd><a href="tel:${esc(b.phone)}" style="color:inherit">${esc(b.phone)}</a></dd>
       <dt>Email</dt><dd><a href="mailto:${esc(b.email)}" style="color:inherit">${esc(b.email)}</a></dd>${v?`<dt>Vehicle</dt><dd>${esc(v)}</dd>`:''}<dt>Service</dt><dd>${esc(b.service)}</dd></dl>
       ${b.pay_status==='conflict'?`<div class="alert">Deposit paid, but the booking could not be confirmed: ${esc(b.pay_note||'')} Reschedule it below, or refund it in the Stripe Dashboard and decline.</div>`:''}
       ${money(b)}
