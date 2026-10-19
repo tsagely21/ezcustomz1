@@ -7,3 +7,7 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+# Checks the admin itself with is_admin(); off so the gateway doesn't reject newer Supabase token formats.
+[functions.send-deposit-link]
+verify_jwt = false

@@ -122,7 +122,7 @@ const FORMSUBMIT='https://formsubmit.co/ajax/hunteraucoin12@gmail.com'; // same 
 /* ============================================================================================================================== */
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let token=sessionStorage.getItem('ezt')||'';
-const ERR={slot_taken:'That day is already confirmed for someone else.',not_pending:'This booking was already handled. Refreshing.',not_approved:'That booking is no longer confirmed. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.',bad_range:'"To" date is before "From" date.',range_too_long:'Pick a range of a year or less.',
+const ERR={has_deposit:'This booking has a paid deposit, so it can only go back to Confirmed.',not_closed:'This booking is not cancelled or declined. Refreshing.',slot_taken:'That day is already confirmed for someone else.',not_pending:'This booking was already handled. Refreshing.',not_approved:'That booking is no longer confirmed. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.',bad_range:'"To" date is before "From" date.',range_too_long:'Pick a range of a year or less.',
   slot_held:'That day is held for another customer who has a deposit link. Release their hold first (Awaiting deposit tab).',day_blocked:'That day is marked as a day off. Remove it in Days off first.',
   bad_estimate:'Enter an estimated total between $1 and $100,000.',bad_deposit:'The deposit must be at least $1 and no more than the estimated total.',bad_hold:'Pick how long to hold the day.',invalid_date:'Pick a date after today.',
   terms_locked:'Published terms can\'t be changed. Start a new version instead.',bad_version:'Version name: letters, numbers, dots or dashes only, like v2.',invalid_input:'The terms or checkbox text is too short or too long.'};
@@ -166,7 +166,13 @@ const linkForm=(b,est,dep,lbl)=>`<form class="box" data-f="link" data-id="${b.id
   <label class="chk"><input type="checkbox" name="m" checked> Email the link to ${esc(b.email)}</label>
   <button class="primary full">${b.pay_status==='awaiting'?'Update amounts and restart the hold':'Approve and create deposit link'}</button></form>`;
 // Emails the customer their pay link through the site's FormSubmit inbox: the customer gets the autoresponse, the owner gets a copy as a record.
-async function mailLink(b){const l=location.origin+'/pay.html?t='+b.pay_token,v=veh(b);
+// Prefers the send-deposit-link Edge Function (Resend, from your own address); falls back to FormSubmit until Resend is set up.
+async function mailLink(b){
+  try{const r=await fetch(SUPABASE_URL+'/functions/v1/send-deposit-link',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token},body:JSON.stringify({booking_id:b.id})});
+    const j=await r.json().catch(()=>({}));if(r.ok&&j.ok)return true;
+    if(['send_failed','not_found','not_admin'].includes(j.error))return 'Email service said: '+(j.message||j.error)}catch(_){} // real failure; anything else = not set up yet
+  return mailFS(b)}
+async function mailFS(b){const l=location.origin+'/pay.html?t='+b.pay_token,v=veh(b);
   const t=[`Hi ${b.name.split(' ')[0]},`,'',`Good news: your EZ CUSTOMZ quote is approved!`,'',...(v?[`Vehicle: ${v}`]:[]),`Service: ${b.service}`,`Appointment date: ${fmtD(b.slot_date)}`,
     `Estimated total: ${usd(b.estimate_cents)}`,`Deposit to lock in your date: ${usd(b.deposit_cents)} (comes out of your total)`,'',
     `Pay your deposit securely here (you'll review our Deposit & Payment Terms first):`,l,'',
@@ -188,7 +194,10 @@ function actions(b){const A=(a,c,t)=>`<button class="${c}" data-a="${a}" data-id
   if(b.status==='pending')return linkForm(b,fromSel(b,/Estimate: \$([\d,.]+)/),fromSel(b,/Deposit to schedule: \$([\d,.]+)/),'Approve the quote and request a deposit')+`<div class="acts">${A('approve_booking','acc','Confirm without deposit')}${A('decline_booking','dec','Decline')}</div>`;
   if(b.status==='approved')return `<form class="box" data-f="est" data-id="${b.id}"><b>Final price</b><div class="rr"><label>Adjusted total ($), only after the customer approves<input name="e" inputmode="decimal" required value="${esc(dol(b.estimate_cents))}"></label></div>
     <div class="acts"><button>Update total</button><button type="button" data-x="bal" data-id="${b.id}" data-v="${b.balance_paid_at?0:1}">${b.balance_paid_at?'Undo paid in full':'Mark balance paid'}</button></div></form>`+move(b)+`<div class="acts">${A('cancel_booking','cnl','Cancel booking')}${A('delete_booking','dec','Delete')}</div>`;
-  return `<div class="acts">${A('delete_booking','dec','Delete')}</div>`}
+  return `<form class="box" data-f="restore" data-id="${b.id}"><b>Restore this booking</b><p class="note" style="margin:0 0 6px">Cancelled or declined by mistake? Put it back.</p>
+    <div class="rr"><label>Move it to<select name="to"><option value="approved">Confirmed${b.deposit_paid_cents!=null?' (deposit stays on file)':''}</option>${b.deposit_paid_cents==null?'<option value="pending">New requests (review again)</option>':''}</select></label>
+    <label>Date<input type="date" name="d" required value="${esc(b.slot_date)}"></label></div><button class="full">Restore booking</button></form>
+    <div class="acts">${A('delete_booking','dec','Delete')}</div>`}
 let RB={};
 async function load(){
   $('am').textContent='';$('am').className='msg';
@@ -229,6 +238,9 @@ $('list').onsubmit=e=>{e.preventDefault();const f=e.target,F=f.elements,id=f.dat
       setTab('await');$('list').hidden=false;await load();
       if(note){$('am').textContent=note;$('am').className=/^Deposit link emailed/.test(note)?'msg ok':'msg'}})()}
   if(f.dataset.f==='est'){const est=cents(F.e.value);if(!(est>=100&&est<=1e7))return $('am').textContent=ERR.bad_estimate;return act(btn,'admin_set_estimate',{p_id:id,p_estimate_cents:est})}
+  if(f.dataset.f==='restore'){const to=F.to.value;
+    if(!confirm(`Restore this booking to ${to==='approved'?'Confirmed':'New requests'} on ${fmtD(F.d.value)}?`+(to==='approved'?' The whole day will be blocked on the public calendar.':'')))return;
+    return act(btn,'admin_restore_booking',{p_id:id,p_to:to,p_date:F.d.value},to==='approved'?'approved':'pending')}
   if(f.dataset.f==='move'){if(!confirm('Move this booking to '+fmtD(F.d.value)+'?'))return;return act(btn,'admin_reschedule',{p_id:id,p_date:F.d.value},'approved')}};
 
 /* payments: proof of agreement + payment history */

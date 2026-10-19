@@ -69,6 +69,20 @@ Admin panel > **Terms** tab. Version `v1` is a **draft** with your lawyer's thre
 
 The first FormSubmit email to a new address triggers an activation email; click it once.
 
+## Customer emails from your own address (Resend)
+
+Without this, pay-link and confirmation emails to customers go through FormSubmit's auto-reply, which is often filtered or never arrives.
+
+1. Sign up at **resend.com** (free: 3,000 emails/month).
+2. **Domains > Add domain** > `ezcustomz.co`. Resend shows a few DNS records (TXT/MX/CNAME). Add them where the domain is registered (where `ezcustomz.co` was bought, e.g. Namecheap, GoDaddy, Squarespace, Cloudflare) under DNS settings. They don't affect the website. Wait until Resend shows **Verified** (minutes to a few hours).
+3. **API Keys > Create API key** (permission: Sending access). Copy it (`re_...`).
+4. Supabase > Edge Functions > Secrets:
+   - `RESEND_API_KEY` = the `re_...` key
+   - `RESEND_FROM` = `EZ CUSTOMZ <bookings@ezcustomz.co>`
+5. Deploy the third function: Edge Functions > Deploy a new function > Via editor > name `send-deposit-link`, paste `supabase/functions/send-deposit-link/index.ts`, deploy, then turn **off** "Enforce JWT verification" (it checks your admin login itself).
+
+Then approving a quote emails the customer a branded message with a **Pay deposit** button (you get a BCC copy), and payment confirmations go through Resend too. If Resend refuses a send, the admin panel shows its reason.
+
 ## 8. Going live (only when you decide)
 
 1. **Activate your Stripe account**: Dashboard > switch off Test mode/Sandbox > **Activate payments**. Enter business details, your EIN or SSN, and the bank account for payouts. Wait until it says payments are enabled.

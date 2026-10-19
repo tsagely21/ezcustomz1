@@ -263,6 +263,44 @@ begin
   where id = p_id;
 end $$;
 
+-- Undo a cancel/decline (e.g. done by accident). p_to 'approved' = confirmed on p_date (default: original day),
+-- 'pending' = back to New requests (only if no deposit was paid). The "Cancelled booking (...)" day-off that
+-- cancelling created for that day is removed; any other day off, booking or hold on the day blocks the restore.
+create or replace function public.admin_restore_booking(p_id uuid, p_to text, p_date date default null)
+returns void language plpgsql security definer set search_path = public as $$
+declare b public.bookings; d date;
+begin
+  if not public.is_admin() then raise exception 'not_admin'; end if;
+  select * into b from public.bookings where id = p_id for update;
+  if not found then raise exception 'not_found'; end if;
+  if b.status not in ('cancelled', 'declined') then raise exception 'not_closed'; end if;
+  d := coalesce(p_date, b.slot_date);
+  if p_to = 'pending' then
+    if b.deposit_paid_cents is not null then raise exception 'has_deposit'; end if;
+    if d <= (now() at time zone 'America/Chicago')::date then raise exception 'invalid_date'; end if;
+    update public.bookings set status = 'pending', slot_date = d, decided_at = null, pay_status = 'none', hold_until = null,
+      pay_token = null, checkout_session_id = null where id = p_id;
+    return;
+  end if;
+  if p_to <> 'approved' then raise exception 'invalid_input'; end if;
+  perform public.lock_day(d);
+  delete from public.blocked_days where day = d and note like 'Cancelled booking (' || left(b.name, 150) || ')%';
+  if exists (select 1 from public.blocked_days where day = d) then raise exception 'day_blocked'; end if;
+  if exists (select 1 from public.bookings where slot_date = d and status = 'approved' and id <> p_id) then raise exception 'slot_taken'; end if;
+  if public.day_held(d, p_id) then raise exception 'slot_held'; end if;
+  update public.bookings set status = 'approved', slot_date = d, decided_at = now(), hold_until = null,
+    pay_status = case when pay_status = 'awaiting' then 'none' else pay_status end where id = p_id;
+end $$;
+
+-- Server only: booking + admin check for the send-deposit-link Edge Function.
+create or replace function public.admin_booking_for_email(p_id uuid)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('name', b.name, 'email', b.email, 'service', b.service, 'vehicle', public.vehicle_of(b.selections),
+    'slot_date', b.slot_date, 'estimate_cents', b.estimate_cents, 'deposit_cents', b.deposit_cents, 'hold_until', b.hold_until,
+    'pay_token', b.pay_token, 'pay_status', b.pay_status, 'status', b.status)
+  from public.bookings b where b.id = p_id;
+$$;
+
 create or replace function public.admin_list_agreements()
 returns setof public.deposit_agreements language plpgsql stable security definer set search_path = public as $$
 begin
@@ -447,6 +485,10 @@ grant execute on function public.admin_list_agreements() to authenticated;
 grant execute on function public.admin_list_terms() to authenticated;
 grant execute on function public.admin_save_terms(text, text, text) to authenticated;
 grant execute on function public.admin_publish_terms(text) to authenticated;
+revoke execute on function public.admin_restore_booking(uuid, text, date) from anon, public;
+grant execute on function public.admin_restore_booking(uuid, text, date) to authenticated;
+revoke execute on function public.admin_booking_for_email(uuid) from anon, authenticated, public;
+grant execute on function public.admin_booking_for_email(uuid) to service_role;
 
 revoke execute on function public.deposit_checkout_begin(text, boolean, text, text) from anon, authenticated, public;
 revoke execute on function public.deposit_checkout_attach(uuid, uuid, text, timestamptz) from anon, authenticated, public;
