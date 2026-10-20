@@ -540,6 +540,11 @@ addEventListener('DOMContentLoaded',()=>fetch(SUPABASE_URL+'/rest/v1/rpc/get_gal
           <label class="f">Make<select id="mk" name="vehicle_make" required></select></label>
           <label class="f">Model<select id="md" name="vehicle_model" required><option value="">Select make first</option></select></label>
         </div>
+        <div class="row two" id="vow" hidden style="margin-top:14px">
+          <label class="f" id="xmkw">Type your make<input id="xmk" name="vehicle_make_other" autocomplete="off" placeholder="e.g. Isuzu"></label>
+          <label class="f" id="xmdw">Type your model<input id="xmd" name="vehicle_model_other" autocomplete="off" placeholder="e.g. F-600"></label>
+        </div>
+        <label class="f" style="margin-top:14px"><span>Trim, cab or body style <span class="opt">(optional)</span></span><input id="vtr" name="vehicle_trim" autocomplete="off" placeholder="e.g. Lariat Crew Cab, King Ranch, Limited, Sport"></label>
       </fieldset>
 
       <fieldset>
@@ -666,15 +671,18 @@ addEventListener('DOMContentLoaded',()=>fetch(SUPABASE_URL+'/rest/v1/rpc/get_gal
 <script>
 const FORMSPREE='https://formsubmit.co/ajax/hunteraucoin12@gmail.com';
 const $=id=>document.getElementById(id);
-const D={Acura:"ILX s,Integra s,MDX x,RDX x,TLX s",Audi:"A3 s,A4 s,A5 c,Q3 x,Q5 x,Q7 x",BMW:"2 Series c,3 Series s,4 Series c,5 Series s,X3 x,X5 x",Buick:"Enclave x,Encore x,Envision x",Cadillac:"CT4 s,CT5 s,Escalade u,XT5 x",Chevrolet:"Camaro c,Colorado t,Equinox x,Silverado t,Tahoe u,Traverse x",Chrysler:"300 s,Pacifica x",Dodge:"Challenger c,Charger s,Durango u",Ford:"Bronco u,Edge x,Escape x,Explorer x,F-150 t,Mustang c",GMC:"Acadia x,Sierra t,Terrain x,Yukon u",Honda:"Accord s,Civic s,CR-V x,Pilot x",Hyundai:"Elantra s,Palisade x,Santa Fe x,Sonata s,Tucson x",Infiniti:"Q50 s,QX60 x,QX80 u",Jeep:"Cherokee x,Compass x,Grand Cherokee x,Wrangler u",Kia:"Forte s,Sorento x,Sportage x,Telluride x",Lexus:"ES s,GX u,IS s,RX x",Lincoln:"Aviator x,Corsair x,Navigator u",Mazda:"CX-5 x,CX-9 x,Mazda3 s","Mercedes-Benz":"C-Class s,E-Class s,GLC x,GLE x",Nissan:"Altima s,Armada u,Maxima s,Rogue x,Sentra s",Ram:"1500 t,2500 t",Subaru:"Forester x,Outback x,WRX s",Tesla:"Model 3 s,Model S s,Model X x,Model Y x",Toyota:"4Runner u,Camry s,Corolla s,Highlander x,RAV4 x,Tacoma t,Tundra t",Volkswagen:"Atlas x,Golf s,Jetta s,Tiguan x",Other:"Other o"};
+const D={Acura:"CL c,ILX s,Integra s,MDX x,NSX c,RDX x,RL s,RLX s,RSX c,TL s,TLX s,TSX s,ZDX x","Alfa Romeo":"Giulia s,Stelvio x,Tonale x",Audi:"A3 s,A4 s,A5 c,A6 s,A7 s,A8 s,e-tron x,Q3 x,Q4 e-tron x,Q5 x,Q7 x,Q8 x,R8 c,RS3 s,RS5 c,RS6 s,RS7 s,S3 s,S4 s,S5 c,TT c",BMW:"1 Series c,2 Series c,3 Series s,4 Series c,5 Series s,6 Series c,7 Series s,8 Series c,i3 s,i4 s,i5 s,i7 s,iX x,M2 c,M3 s,M4 c,M5 s,X1 x,X2 x,X3 x,X4 x,X5 x,X6 x,X7 u,XM x,Z4 c",Buick:"Cascada c,Enclave x,Encore x,Encore GX x,Envista x,Envision x,LaCrosse s,Lucerne s,Regal s,Rendezvous x,Verano s",Cadillac:"ATS s,CT4 s,CT5 s,CT6 s,CTS s,DeVille s,DTS s,Escalade u,Escalade ESV u,Lyriq x,SRX x,STS s,XT4 x,XT5 x,XT6 x,XTS s",Chevrolet:"Avalanche t,Aveo s,Blazer x,Bolt s,Camaro c,Caprice s,Cavalier s,Cobalt s,Colorado t,Corvette c,Cruze s,Equinox x,Express Van u,HHR s,Impala s,Malibu s,Monte Carlo c,S-10 t,Silverado 1500 t,Silverado 2500HD t,Silverado 3500HD t,Sonic s,Spark s,SS s,Suburban u,Tahoe u,Trailblazer x,Traverse x,Trax x,Volt s",Chrysler:"200 s,300 s,Aspen x,Pacifica x,PT Cruiser s,Sebring s,Town & Country x,Voyager x",Dodge:"Avenger s,Caliber s,Challenger c,Charger s,Dakota t,Dart s,Durango u,Grand Caravan x,Hornet x,Intrepid s,Journey x,Magnum s,Neon s,Nitro x,Ram 1500 (older) t,Ram 2500 (older) t,Ram 3500 (older) t,Viper c",Fiat:"500 s,500X x",Ford:"Bronco u,Bronco Sport x,C-Max s,Crown Victoria s,E-Series Van u,EcoSport x,Edge x,Escape x,Excursion u,Expedition u,Expedition MAX u,Explorer x,Explorer Sport Trac t,F-150 t,F-150 Lightning t,F-250 Super Duty t,F-350 Super Duty t,F-450 Super Duty t,Fiesta s,Five Hundred s,Flex x,Focus s,Fusion s,GT c,Maverick t,Mustang c,Mustang Mach-E x,Ranger t,Taurus s,Thunderbird c,Transit u,Transit Connect x",Genesis:"G70 s,G80 s,G90 s,GV60 x,GV70 x,GV80 x",GMC:"Acadia x,Canyon t,Envoy x,Hummer EV t,Savana Van u,Sierra 1500 t,Sierra 2500HD t,Sierra 3500HD t,Terrain x,Yukon u,Yukon XL u",Honda:"Accord s,Civic s,CR-V x,CR-Z c,Crosstour x,Element x,Fit s,HR-V x,Insight s,Odyssey x,Passport x,Pilot x,Prologue x,Ridgeline t,S2000 c",Hummer:"H1 u,H2 u,H3 x",Hyundai:"Accent s,Azera s,Elantra s,Equus s,Genesis s,Genesis Coupe c,Ioniq s,Ioniq 5 x,Ioniq 6 s,Kona x,Palisade x,Santa Cruz t,Santa Fe x,Sonata s,Tucson x,Veloster c,Venue x",Infiniti:"FX x,G35 s,G37 s,M35 s,M37 s,Q50 s,Q60 c,Q70 s,QX4 x,QX50 x,QX55 x,QX56 u,QX60 x,QX80 u",Jaguar:"E-Pace x,F-Pace x,F-Type c,I-Pace x,XE s,XF s,XJ s",Jeep:"Cherokee x,Commander x,Compass x,Gladiator t,Grand Cherokee x,Grand Cherokee L x,Grand Wagoneer u,Liberty x,Patriot x,Renegade x,Wagoneer u,Wrangler u,Wrangler Unlimited u",Kia:"Cadenza s,Carnival x,EV6 x,EV9 x,Forte s,K4 s,K5 s,K900 s,Niro x,Optima s,Rio s,Sedona x,Seltos x,Sorento x,Soul s,Sportage x,Stinger s,Telluride x","Land Rover":"Defender u,Discovery x,Discovery Sport x,LR4 x,Range Rover u,Range Rover Evoque x,Range Rover Sport u,Range Rover Velar x",Lexus:"CT s,ES s,GS s,GX u,IS s,LC c,LS s,LX u,NX x,RC c,RX x,RZ x,TX x,UX x",Lincoln:"Aviator x,Continental s,Corsair x,LS s,Mark LT t,MKC x,MKS s,MKT x,MKX x,MKZ s,Nautilus x,Navigator u,Navigator L u,Town Car s",Maserati:"Ghibli s,Grecale x,Levante x,Quattroporte s",Mazda:"CX-3 x,CX-30 x,CX-5 x,CX-50 x,CX-70 x,CX-9 x,CX-90 x,Mazda2 s,Mazda3 s,Mazda6 s,MX-5 Miata c,RX-8 c,Tribute x","Mercedes-Benz":"A-Class s,AMG GT c,C-Class s,CLA s,CLS s,E-Class s,EQE s,EQS s,G-Class u,GLA x,GLB x,GLC x,GLE x,GLS u,S-Class s,SL c,Sprinter u",Mercury:"Grand Marquis s,Mariner x,Milan s,Mountaineer x,Sable s",Mini:"Clubman s,Cooper s,Countryman x",Mitsubishi:"Eclipse c,Eclipse Cross x,Galant s,Lancer s,Mirage s,Outlander x,Outlander Sport x",Nissan:"350Z c,370Z c,Altima s,Armada u,Frontier t,GT-R c,Juke x,Kicks x,Leaf s,Maxima s,Murano x,NV Van u,Pathfinder x,Quest x,Rogue x,Sentra s,Titan t,Titan XD t,Versa s,Xterra x,Z c",Pontiac:"Bonneville s,G6 s,G8 s,Grand Am s,Grand Prix s,Firebird c,Solstice c,Torrent x,Vibe s",Porsche:"718 Boxster c,718 Cayman c,911 c,Cayenne x,Macan x,Panamera s,Taycan s",Ram:"1500 t,1500 Classic t,2500 t,3500 t,ProMaster u,ProMaster City x",Rivian:"R1S u,R1T t",Saturn:"Aura s,Ion s,Outlook x,Sky c,Vue x",Scion:"FR-S c,iM s,tC c,xB s,xD s",Subaru:"Ascent x,BRZ c,Crosstrek x,Forester x,Impreza s,Legacy s,Outback x,Solterra x,WRX s",Tesla:"Cybertruck t,Model 3 s,Model S s,Model X x,Model Y x",Toyota:"4Runner u,86 c,Avalon s,bZ4X x,C-HR x,Camry s,Corolla s,Corolla Cross x,Crown s,FJ Cruiser x,GR Supra c,GR86 c,Grand Highlander x,Highlander x,Land Cruiser u,Matrix s,Prius s,RAV4 x,Sequoia u,Sienna x,Solara c,Tacoma t,Tundra t,Venza x,Yaris s",Volkswagen:"Arteon s,Atlas x,Atlas Cross Sport x,Beetle c,CC s,Golf s,GTI s,ID.4 x,Jetta s,Passat s,Taos x,Tiguan x,Touareg x",Volvo:"S60 s,S90 s,V60 s,V90 s,XC40 x,XC60 x,XC90 x",Other:""};
 const R={s:650,u:1200,t:1000,x:850,c:450};
 const M={},CAT={};
-for(const[k,v]of Object.entries(D)){M[k]=[];CAT[k]={};v.split(',').forEach(m=>{const i=m.lastIndexOf(' ');M[k].push(m.slice(0,i));CAT[k][m.slice(0,i)]=m.slice(i+1)})}
+const OTH='Other / not listed';
+for(const[k,v]of Object.entries(D)){M[k]=[];CAT[k]={};if(v)v.split(',').forEach(m=>{const i=m.lastIndexOf(' ');M[k].push(m.slice(0,i));CAT[k][m.slice(0,i)]=m.slice(i+1)})}
 const opts=(a,first)=>`<option value="">${first}</option>`+a.map(v=>`<option>${v}</option>`).join('');
 $('yr').innerHTML=opts([...Array(31).keys()].map(i=>2026-i).concat('1995 or older'),'Select year');
 $('mk').innerHTML=opts(Object.keys(M),'Select make');
-$('mk').onchange=()=>{$('md').innerHTML=opts(M[$('mk').value]||[],M[$('mk').value]?'Select model':'Select make first');rec()};
-$('md').onchange=()=>rec();
+$('mk').onchange=()=>{const k=$('mk').value;$('md').innerHTML=opts(k?M[k].concat(OTH):[],k?'Select model':'Select make first');if(k==='Other')$('md').value=OTH;vo();rec()};
+$('md').onchange=()=>{vo();rec()};
+function vo(){const om=$('mk').value==='Other',od=$('md').value===OTH;$('vow').hidden=!(om||od);$('xmkw').hidden=!om;$('xmdw').hidden=!od}
+const veh=()=>{const om=$('mk').value==='Other',od=$('md').value===OTH,t=$('vtr').value.trim();return [$('yr').value,om?$('xmk').value.trim():$('mk').value,od?$('xmd').value.trim():$('md').value].join(' ')+(t?' ('+t+')':'')};
 [...$('pkg').options].forEach(o=>{if(!o.dataset.n)return;
   o.dataset.c=o.textContent;
   o.dataset.l=o.textContent});
@@ -728,10 +736,12 @@ function svc(){
 document.querySelectorAll('#qf input,#qf select').forEach(e=>e.addEventListener('change',sync));
 sync();
 
-const NM={yr:'vehicle year',mk:'vehicle make',md:'vehicle model',pt:'at least one service',pkg:'star count',own:'starlight kit question',sk:'speaker rack or box',rk:'rack style',bx:'speaker box placement',ot:'placement details',pd:'preferred date',nm:'your name',ph:'a 10-digit phone number',em:'a valid email address',nt:'anything else we should know'};
+const NM={yr:'vehicle year',mk:'vehicle make',md:'vehicle model',xmk:'your vehicle make',xmd:'your vehicle model',pt:'at least one service',pkg:'star count',own:'starlight kit question',sk:'speaker rack or box',rk:'rack style',bx:'speaker box placement',ot:'placement details',pd:'preferred date',nm:'your name',ph:'a 10-digit phone number',em:'a valid email address',nt:'anything else we should know'};
 function need(){
   const miss=[],st=has('Starlight headliner'),sp=has('Speaker box / rack');
   ['yr','mk','md'].forEach(i=>{if(!$(i).value)miss.push(i)});
+  if($('mk').value==='Other'&&!$('xmk').value.trim())miss.push('xmk');
+  if($('md').value===OTH&&!$('xmd').value.trim())miss.push('xmd');
   if(!picks().length)miss.push('pt');
   if(st&&!$('pkg').value)miss.push('pkg');
   if(st&&!$('own').value)miss.push('own');
@@ -760,7 +770,7 @@ $('qf').addEventListener('submit',async e=>{
   e.preventDefault();
   const m=need();
   if(m.length){flag(m,true);return}
-  const L=['Quote request for EZ CUSTOMZ','Vehicle: '+$('yr').value+' '+$('mk').value+' '+$('md').value,'Project: '+picks().join(' + ')];
+  const L=['Quote request for EZ CUSTOMZ','Vehicle: '+veh(),'Project: '+picks().join(' + ')];
   if(!$('sl').hidden){L.push('Starlights: '+$('pkg').value);L.push('Starlight kit: '+$('own').value);if($('up').value)L.push('Upgrades: '+$('up').value);if($('sr').value)L.push($('sr').value);if($('logo').checked)L.push('Custom logo: yes');}
   if(!$('sp').hidden){L.push('Speakers: '+$('sk').value+(($('rk').value)?' ('+$('rk').value+')':'')+(($('bx').value)?' ('+($('bx').value==='Other'?$('ot').value.trim():$('bx').value)+')':''))}
   if($('amt').textContent.length>1)L.push('Estimate: '+$('amt').textContent.replace('USD',' USD'));

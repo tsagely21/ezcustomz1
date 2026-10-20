@@ -32,7 +32,7 @@ The base tables, `bookings` RPCs and `is_admin()` are **not** in the repo (only 
 Inline `<script>` blocks, in order:
 1. **Gallery** — managed from admin > Gallery. On `DOMContentLoaded` it fetches `get_gallery`, keeps `place='home'`, and calls `galShow()`; the `GALLERY` array is only the fallback if Supabase fails (`label`, `note`, `img`, optional `thumb`/`video`/`alt`/`pos`). The rest is carousel + lightbox code. Section is `hidden` until it has items.
 2. **Quote form** (`#qf`) — Vehicle year/make/model, services (starlight / ambient / speaker), pricing, date, contact.
-   - `D` = vehicle makes/models string; each model ends in a size code (`s` sedan, `u`, `t` truck, `x` SUV, `c` coupe) mapped to base price via `R`. `rec()` recommends a star count from it.
+   - `D` = vehicle makes/models string; each model ends in a size code (`s` sedan, `u`, `t` truck, `x` SUV, `c` coupe) mapped to base price via `R`. `rec()` recommends a star count from it. ~50 makes incl. older/discontinued models and HD trucks (F-250, 2500HD...). Every make's model list ends in `OTH` ("Other / not listed"); that or make `Other` shows free-text `#xmk`/`#xmd` (required when shown, via `vo()`). Optional `#vtr` trim field. `veh()` builds the "Vehicle:" summary line (admin's `vehicle_of()` parses it).
    - `sync()` recomputes the estimate, deposit ($150 per service) and summary chips on any change.
    - `need()` / `flag()` do required-field validation (`NM` holds the field labels).
    - Submit: builds a text summary, POSTs to Supabase RPC `create_booking_request`, then also POSTs the form to FormSubmit.co (`FORMSPREE` const, AJAX endpoint; no submission limit). Success if either works. If both fail the user gets SMS / email / copy fallback buttons.
