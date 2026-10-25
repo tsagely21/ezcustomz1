@@ -17,6 +17,7 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 | `terms.html` | Public Deposit & Payment Terms, rendered from the live `deposit_terms` row (`get_deposit_terms`). Linked in every footer |
 | `supabase/deposits.sql` | Stripe deposits: payment columns on `bookings`, `deposit_terms`, `deposit_agreements`, `stripe_events`, holds/triggers, admin + service-role RPCs. Setup steps in `supabase/STRIPE_SETUP.md` |
 | `supabase/functions/` | Deno Edge Functions `create-checkout` and `stripe-webhook` (`npm:stripe@22.6.2`). Secrets live in Supabase, never in the repo |
+| `supabase/telegram.sql` + `functions/telegram-bot` | Telegram quote alerts (@ezcustomz_bot): insert trigger (`pg_net`) pings the function once per booking (`tg_notified_at`); owner taps Send link (form's estimate/deposit, 48 h hold, `admin_send_deposit_link` + `send-deposit-link` email) / Change price (reply `1200 300`) / Decline; `/pending` re-lists. `is_admin()` is true for `service_role` so the bot can call admin RPCs. Only `TELEGRAM_CHAT_ID` can act; webhook secret = SHA-256 of `<token>:ez-hook`. Setup in `supabase/TELEGRAM_SETUP.md` |
 | `images/gallery/*.webp` | Gallery photos used by `GALLERY` in `index.html` |
 
 The base tables, `bookings` RPCs and `is_admin()` are **not** in the repo (only `days_off.sql` is); they live in the Supabase project.
