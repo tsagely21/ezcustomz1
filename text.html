@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Text the Customer | EZ CUSTOMZ</title>
+<meta name="theme-color" content="#0f0a20">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<style>
+:root{--bg:#f6f3fb;--card:#fff;--ink:#1a1428;--mute:#6b6478;--line:#e3dded;--vio:#8f4fe0;--err:#c62828}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151025;--card:#1e1736;--ink:#f1ecfa;--mute:#a79fb8;--line:#33294f;--vio:#a46af0;--err:#ff8a8a}}
+:root[data-theme="dark"]{--bg:#151025;--card:#1e1736;--ink:#f1ecfa;--mute:#a79fb8;--line:#33294f;--vio:#a46af0;--err:#ff8a8a}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh;display:grid;place-items:center;padding:16px}
+main{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:440px}
+h1{font-size:20px;margin:0 0 4px}p{margin:0 0 14px;color:var(--mute)}
+pre{white-space:pre-wrap;word-break:break-word;font:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 16px}
+a.btn{display:block;text-align:center;background:var(--vio);color:#fff;text-decoration:none;font-weight:700;padding:14px;border-radius:10px}
+.err{color:var(--err)}
+</style>
+</head>
+<body>
+<!-- Opened from the Telegram bot's "Text it from my phone" button: hands the message to the phone's own Messages app,
+     so it goes out from the owner's number. Phone + message ride in the #fragment, which is never sent to any server. -->
+<main>
+  <div id="ok" hidden>
+    <h1>Text <span id="to"></span></h1>
+    <p>Opens Messages on your phone with this filled in. Check it and press send.</p>
+    <pre id="msg"></pre>
+    <a class="btn" id="go">Open Messages</a>
+  </div>
+  <p class="err" id="bad" hidden>This link is missing the customer's number. Open the deposit link from the Telegram card and text it by hand.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),q=new URLSearchParams(location.hash.slice(1)),ph=(q.get('p')||'').replace(/[^\d+]/g,''),b=q.get('b')||'';
+if(ph.replace(/\D/g,'').length<10){$('bad').hidden=false}else{
+  const href=`sms:${ph}?&body=${encodeURIComponent(b)}`; // "?&body=" works on both iPhone and Android
+  $('to').textContent=ph;$('msg').textContent=b;$('go').href=href;$('ok').hidden=false;
+  location.href=href}
+</script>
+</body>
+</html>

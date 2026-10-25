@@ -68,8 +68,9 @@ const defaults = (b: any) => [fromSel(String(b.selections ?? ''), /Estimate: \$(
 const pendingNow = (b: any) => b && b.status === 'pending' && b.pay_status === 'none';
 
 // Replace a card (and its buttons) with the customer summary plus a result line, signed with who tapped (for groups).
-async function settle(m: any, b: any, line: string) {
-  await tg('editMessageText', { chat_id: CHAT, message_id: m.message_id, text: (b ? `${who(b)}\n\n` : '') + line + (m.by ?? ''), parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
+async function settle(m: any, b: any, line: string, buttons: unknown[][] = []) {
+  await tg('editMessageText', { chat_id: CHAT, message_id: m.message_id, text: (b ? `${who(b)}\n\n` : '') + line + (m.by ?? ''), parse_mode: 'HTML', link_preview_options: { is_disabled: true },
+    reply_markup: { inline_keyboard: buttons } });
 }
 
 async function sendLink(m: any, b: any, est: number, dep: number) {
@@ -80,7 +81,11 @@ async function sendLink(m: any, b: any, est: number, dep: number) {
   const e = await fetch(`${SB_URL}/functions/v1/send-deposit-link`, { method: 'POST', headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ booking_id: id }) });
   const ej = await e.json().catch(() => ({}));
   const mail = e.ok && ej.ok ? `📧 Emailed to ${esc(b.email)}.` : `⚠️ The email didn't go through (${esc(ej.message ?? ej.error ?? `HTTP ${e.status}`)}). Text or email them the link below.`;
-  await settle(m, b, `✅ <b>Deposit link created</b>: total ${usd(est)}, deposit ${usd(dep)}. Day held until ${esc(when(r.data.hold_until))}.\n${mail}\n🔗 ${esc(link)}`);
+  // Telegram buttons only open web links, so text.html hands the message to the phone's Messages app (sent from your own number).
+  const sms = `Hi ${String(b.name).split(' ')[0]}, your EZ CUSTOMZ quote is approved! Estimated total ${usd(est)}. To lock in ${day(b.slot_date)}, please review our deposit terms and pay your ${usd(dep)} deposit here: ${link} . We're holding the date until ${when(r.data.hold_until)}.`;
+  const textIt = `${SITE}/text.html#` + new URLSearchParams({ p: String(b.phone ?? ''), b: sms });
+  await settle(m, b, `✅ <b>Deposit link created</b>: total ${usd(est)}, deposit ${usd(dep)}. Day held until ${esc(when(r.data.hold_until))}.\n${mail}\n🔗 ${esc(link)}`,
+    [[{ text: '📱 Text it from my phone', url: textIt }]]);
 }
 
 async function onCallback(q: any) {
