@@ -21,4 +21,13 @@ Only the chat in `TELEGRAM_CHAT_ID` can use the buttons. Anyone else who finds t
    `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://umvdxjnhzehcoujrishh.supabase.co/functions/v1/telegram-bot&secret_token=<SECRET>&allowed_updates=["message","callback_query"]`
 5. **Test**: message the bot (it replies), submit a test quote on the site, tap the buttons.
 
+## Using it in a group (owner + staff)
+
+1. In Telegram, create a group, add the people who should approve quotes and **@ezcustomz_bot**.
+2. Everyone sends `/id` in the group. The bot replies with the group's **Chat ID** (starts with `-`) and each person's **user ID**.
+3. Secrets: set `TELEGRAM_CHAT_ID` to the group's Chat ID, and add `TELEGRAM_ADMIN_IDS` = the user IDs, comma-separated (e.g. `8314557213,123456789`).
+4. Send `/pending` in the group to check. Cards now go to the group; only the listed people can tap buttons, and each result says who tapped it.
+
+If Telegram upgrades the group to a "supergroup" (it happens when you change some group settings), its Chat ID changes: send `/id` again and update `TELEGRAM_CHAT_ID`.
+
 If the token ever leaks: BotFather > `/revoke`, put the new token in `TELEGRAM_BOT_TOKEN`, redo step 4.

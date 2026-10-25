@@ -3,12 +3,15 @@
 //   ✏️ Change price -> owner replies "1200 300" (total, deposit), gets a new card to confirm
 //   ❌ Decline -> asks again, then decline_booking
 // Two kinds of POST: { new_booking: id } from the bookings insert trigger (telegram.sql), and Telegram updates
-// (checked with the X-Telegram-Bot-Api-Secret-Token header). Only TELEGRAM_CHAT_ID (the owner) can act.
-// Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, optional SITE_URL. Setup in supabase/TELEGRAM_SETUP.md.
+// (checked with the X-Telegram-Bot-Api-Secret-Token header). Cards go to TELEGRAM_CHAT_ID (a private chat or a group);
+// only users in TELEGRAM_ADMIN_IDS (comma-separated, default = TELEGRAM_CHAT_ID) can act, and only inside that chat.
+// /id (anyone, any chat) replies with the chat and user ids, for setup.
+// Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, optional TELEGRAM_ADMIN_IDS, SITE_URL. Setup in supabase/TELEGRAM_SETUP.md.
 const SB_URL = Deno.env.get('SUPABASE_URL')!;
 const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? '';
 const CHAT = Deno.env.get('TELEGRAM_CHAT_ID') ?? '';
+const ADMINS = (Deno.env.get('TELEGRAM_ADMIN_IDS') || CHAT).split(',').map((s) => s.trim()).filter(Boolean);
 const SITE = (Deno.env.get('SITE_URL') ?? 'https://ezcustomz.co').replace(/\/$/, '');
 const HOLD_HOURS = 48;
 
@@ -64,9 +67,9 @@ function card(b: any, est: number | null, dep: number | null, title = '🆕 <b>N
 const defaults = (b: any) => [fromSel(String(b.selections ?? ''), /Estimate: \$([\d,.]+)/), fromSel(String(b.selections ?? ''), /Deposit to schedule: \$([\d,.]+)/)] as const;
 const pendingNow = (b: any) => b && b.status === 'pending' && b.pay_status === 'none';
 
-// Replace a card (and its buttons) with the customer summary plus a result line.
+// Replace a card (and its buttons) with the customer summary plus a result line, signed with who tapped (for groups).
 async function settle(m: any, b: any, line: string) {
-  await tg('editMessageText', { chat_id: CHAT, message_id: m.message_id, text: b ? `${who(b)}\n\n${line}` : line, parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
+  await tg('editMessageText', { chat_id: CHAT, message_id: m.message_id, text: (b ? `${who(b)}\n\n` : '') + line + (m.by ?? ''), parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
 }
 
 async function sendLink(m: any, b: any, est: number, dep: number) {
@@ -84,6 +87,7 @@ async function onCallback(q: any) {
   await tg('answerCallbackQuery', { callback_query_id: q.id });
   const m = q.message, [act, id, a, d] = String(q.data ?? '').split(':');
   if (!m || !isId(id)) return;
+  if (q.from?.first_name) m.by = ` (by ${esc(q.from.first_name)})`;
   const b = await booking(id), amt = (s: string) => (/^\d+$/.test(s ?? '') ? +s : null);
   if (!pendingNow(b)) return settle(m, b, `ℹ️ ${b ? ERR.not_pending : ERR.not_found}`);
   if (act === 'ok') return sendLink(m, b, +a, +d);
@@ -113,6 +117,7 @@ async function onMessage(m: any) {
     for (const b of rows) { const [e, d] = defaults(b); await tg('sendMessage', { chat_id: CHAT, ...card(b, e, d, '⏳ <b>Waiting for your review</b>') }); }
     return;
   }
+  if (!/^\//.test(m.text ?? '')) return; // in a group, stay out of normal conversation
   return tg('sendMessage', { chat_id: CHAT, text: "Hi! I'll message you here whenever a new quote request comes in. Send /pending to see requests still waiting." });
 }
 
@@ -127,8 +132,12 @@ Deno.serve(async (req) => {
     return ok();
   }
   if (req.headers.get('x-telegram-bot-api-secret-token') !== await hookSecret()) return new Response('forbidden', { status: 403 });
-  const from = String(body.callback_query?.from?.id ?? body.message?.from?.id ?? '');
-  if (from !== CHAT) return ok(); // strangers are ignored
+  const u = body.callback_query ?? body.message, from = String(u?.from?.id ?? ''), chat = String(body.callback_query?.message?.chat?.id ?? body.message?.chat?.id ?? '');
+  if (body.message && /^\/id\b/.test(body.message.text ?? '')) {
+    await tg('sendMessage', { chat_id: chat, reply_to_message_id: body.message.message_id, parse_mode: 'HTML', text: `Chat ID: <code>${esc(chat)}</code>\nYour user ID: <code>${esc(from)}</code>` });
+    return ok();
+  }
+  if (chat !== CHAT || !ADMINS.includes(from)) return ok(); // strangers, and other chats, are ignored
   try {
     if (body.callback_query) await onCallback(body.callback_query);
     else if (body.message) await onMessage(body.message);
