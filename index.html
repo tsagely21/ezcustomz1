@@ -788,8 +788,8 @@ $('qf').addEventListener('submit',async e=>{
       const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/create_booking_request',{method:'POST',headers:SB,body:JSON.stringify({p_date:iso(sel),p_name:$('nm').value,p_phone:$('ph').value,p_email:$('em').value,p_service:picks().join(' + '),p_selections:$('msg').value})});
       if(r.ok)booked=true;else{
         const j=await r.json().catch(()=>({})),c=j.message||'';
-        const t={slot_taken:'Sorry, that day was just booked. Please pick another day.',day_blocked:"Sorry, we're not available that day. Please pick another day.",too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
-        if(t){if(btn)btn.disabled=false;if(c==='slot_taken'||c==='day_blocked'){sel=null;pick();await loadTaken()}$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});return}
+        const t={invalid_date:'Please pick a date between tomorrow and one year from today.',invalid_day:"Sorry, we're closed that day. Please pick another day.",slot_taken:'Sorry, that day was just booked. Please pick another day.',day_blocked:"Sorry, we're not available that day. Please pick another day.",too_many_requests:'You already have several open requests. Please call or text 225.615.4554.'}[c];
+        if(t){if(btn)btn.disabled=false;if(c!=='too_many_requests'){sel=null;pick();await loadTaken()}$('err').textContent=t;$('err').hidden=false;$('err').scrollIntoView({block:'center',behavior:'smooth'});return}
       }
     }catch(_){}
   }
@@ -812,7 +812,7 @@ $('back').onclick=()=>{$('done').hidden=true;$('qf').hidden=false};
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('msg').value);$('copy').textContent='Copied'}catch(_){$('msg').select()}};
 
 /* calendar */
-const MN=['January','February','March','April','May','June','July','August','September','October','November','December'],now=new Date(),minD=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1),fmt={weekday:'long',month:'long',day:'numeric',year:'numeric'};
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'],now=new Date(),minD=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1),maxD=new Date(now.getFullYear(),now.getMonth(),now.getDate()+365),fmt={weekday:'long',month:'long',day:'numeric',year:'numeric'};
 /* ===== PASTE YOUR SUPABASE VALUES HERE (Project Settings > API). The anon key is public by design. NEVER paste the service_role key. ===== */
 const SUPABASE_URL='https://umvdxjnhzehcoujrishh.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_bs-39zXRYYVOHmCJeV7mvg_armUMvNH';
@@ -837,10 +837,11 @@ function cal(){
   $('cm').textContent=MN[vm]+' '+vy;
   const first=new Date(vy,vm,1).getDay(),days=new Date(vy,vm+1,0).getDate();
   let h='';for(let i=0;i<first;i++)h+='<span></span>';
-  for(let d=1;d<=days;d++){const dt=new Date(vy,vm,d),off=dt<minD||dt.getDay()===0||BLOCKED.includes(iso(dt))||taken.has(iso(dt)),on=sel&&+sel===+dt;
+  for(let d=1;d<=days;d++){const dt=new Date(vy,vm,d),off=dt<minD||dt>maxD||dt.getDay()===0||BLOCKED.includes(iso(dt))||taken.has(iso(dt)),on=sel&&+sel===+dt;
     h+=`<button type="button" class="day${on?' sel':''}" data-d="${d}" ${off?'disabled':''} aria-pressed="${!!on}" aria-label="${dt.toLocaleDateString('en-US',fmt)}">${d}</button>`}
   $('cd').innerHTML=h;
   $('cp').disabled=vy===minD.getFullYear()&&vm===minD.getMonth();
+  $('cx').disabled=vy===maxD.getFullYear()&&vm===maxD.getMonth(); // bookings open up to a year out (create_booking_request rejects later dates)
 }
 function pick(){const t=sel?sel.toLocaleDateString('en-US',fmt):'';$('pd').value=t;$('pk').textContent=t||'No date selected yet';$('clr').hidden=!sel;cal();refresh()}
 $('cd').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b||b.disabled)return;sel=new Date(vy,vm,+b.dataset.d);pick()});
