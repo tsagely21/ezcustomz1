@@ -1,5 +1,5 @@
 // POST { booking_id } with the admin's login token -> emails the customer their deposit pay link through Resend.
-// Only works for a signed-in admin (checked with is_admin() as that user). Returns { error: 'not_configured' }
+// Only works for a signed-in admin (checked with is_admin() as that user) or the service key (telegram-bot). Returns { error: 'not_configured' }
 // when RESEND_API_KEY / RESEND_FROM aren't set, so the admin panel can fall back to FormSubmit.
 // Secrets: RESEND_API_KEY, RESEND_FROM (e.g. "EZ CUSTOMZ <bookings@ezcustomz.co>"), optional OWNER_EMAIL, SITE_URL.
 const SB_URL = Deno.env.get('SUPABASE_URL')!;
@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
   if (req.method !== 'POST') return out(405, { error: 'method_not_allowed' });
   const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  if (!jwt || (await rpc('is_admin', {}, jwt, ANON)) !== true) return out(401, { error: 'not_admin' });
+  // The service key itself = the telegram-bot function acting for the owner.
+  if (!jwt || (jwt !== SB_KEY && (await rpc('is_admin', {}, jwt, ANON)) !== true)) return out(401, { error: 'not_admin' });
   if (!RESEND || !FROM) return out(503, { error: 'not_configured' });
 
   const { booking_id, note: rawNote } = await req.json().catch(() => ({}));
