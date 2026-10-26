@@ -40,7 +40,9 @@ Inline `<script>` blocks, in order:
    - `need()` / `flag()` do required-field validation (`NM` holds the field labels).
    - Submit: builds a text summary, POSTs to Supabase RPC `create_booking_request`, then also POSTs the form to FormSubmit.co (`FORMSPREE` const, AJAX endpoint; no submission limit). Success if either works. If both fail the user gets SMS / email / copy fallback buttons.
 3. **Calendar** — Month grid (`cal()`); disabled = past/today, Sundays, `BLOCKED` array, or `taken` set. `loadTaken()` fills `taken` from RPCs `get_taken_days` (approved bookings, 120 days) and `get_blocked_days` (admin days off, ~1 year). Fails silently if Supabase is unreachable.
-4. **Starfield** canvas hero animation (respects `prefers-reduced-motion`).
+4. **Hero film** (`#hv` `<video>`): 24 s seamless loop `images/hero/hero-1280.mp4` (phones get `hero-854.mp4` via `<source media>`), poster `hero-poster.webp` also set as the `.hero` background. Plays only when on screen; skipped for `prefers-reduced-motion` and Save-Data (poster stays). Rendered offline in Python/OpenCV from 4 stills of `vid/ezcustomz-hero.mp4` (twinkling stars, shooting stars, LED rings pulsing to 100 bpm, tilt/zoom/light-sweep transitions); the renderer is not in the repo. The old cursor starfield canvas was removed.
+5. **Quote backdrop** (`#qsky` canvas in a sticky `.qbg` inside `main`): twinkling stars that drift with scroll, a shooting star every 6-13 s, speaker-ring glows at the edges on wide screens. Pauses off screen; one static frame for reduced motion.
+- **Revert to the site before the hero film (2026-10-26):** backup branch `backup-before-hero-video` / tag `pre-hero-video` (commit `93cc3cf`). `git checkout pre-hero-video -- index.html` then commit and push.
 
 Seasonal theme: Halloween sale. `SALE_OFF` / `SALE_END` (`'2026-10-31'`, America/Chicago) control $150 off every starlight package. After `SALE_END` the banners (`#hw`, `#hwn`) remove themselves and prices revert. Halloween decor lives in the `i-pumpkin`/`i-web`/`i-skull`... SVG `<symbol>`s and the second `:root{--org...}` CSS block; remove those to retire the theme.
 

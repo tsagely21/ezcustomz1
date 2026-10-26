@@ -372,6 +372,18 @@ main .pg .old{color:#9a93ad}
   .hero-in>:nth-child(2){animation-delay:70ms}.hero-in>:nth-child(3){animation-delay:140ms}.hero-in>:nth-child(4){animation-delay:210ms}
   @keyframes rise{to{opacity:1;transform:none}}
 }
+
+/* hero film: the cabin video plays behind the headline; poster paints first and stays for reduced motion */
+.hero{min-height:min(92svh,860px);background:#0a0716 url(images/hero/hero-poster.webp) 62% 50%/cover}
+.hero-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;transition:opacity 1.4s ease}
+.hero-vid.on{opacity:1}
+.hero::after{background:linear-gradient(90deg,rgba(8,5,18,.82) 0%,rgba(8,5,18,.45) 38%,transparent 66%),linear-gradient(0deg,rgba(10,7,22,.92) 0%,rgba(10,7,22,.35) 32%,transparent 58%)}
+@media(max-width:700px){.hero{min-height:min(88svh,720px);background-position:70% 50%}.hero-vid{object-position:70% 50%}
+  .hero::after{background:linear-gradient(0deg,rgba(10,7,22,.95) 0%,rgba(10,7,22,.62) 45%,rgba(10,7,22,.12) 78%)}}
+/* quote backdrop: viewport-sized canvas that sticks while the form scrolls past */
+main::before{display:none}
+.qbg{position:absolute;inset:0;z-index:0;pointer-events:none}
+#qsky{position:sticky;top:0;display:block;width:100%;height:100vh}
 </style>
 </head>
 <body>
@@ -395,14 +407,14 @@ main .pg .old{color:#9a93ad}
 </header>
 
 <section class="hero" id="top">
-  <canvas id="sky" aria-hidden="true"></canvas>
+  <video class="hero-vid" id="hv" muted loop playsinline preload="none" poster="images/hero/hero-poster.webp" aria-hidden="true"><source src="images/hero/hero-854.mp4" type="video/mp4" media="(max-width:700px)"><source src="images/hero/hero-1280.mp4" type="video/mp4"></video>
+
   <div class="hero-in">
     <h1>Make every drive feel different.</h1>
     <p>Starlight headliners and custom speaker builds for your ride. Tell us what you're dreaming up and we'll put together a quote.</p>
     <div class="cta"><a class="btn" href="#quote">Build my quote</a><a class="btn alt" href="reviews.html">Customer reviews &#9733;</a></div>
   </div>
   <svg class="dc w-hero" aria-hidden="true"><use href="#i-web"/></svg><span class="dc spider" aria-hidden="true"><i></i><svg><use href="#i-spider"/></svg></span><svg class="dc pk-hero" aria-hidden="true"><use href="#i-pumpkin"/></svg><svg class="dc pk-hero2" aria-hidden="true"><use href="#i-pumpkin"/></svg>
-  <div class="hint">Move your cursor across the ceiling</div>
 </section>
 
 <section class="gal" id="gallery" aria-labelledby="gal-h" hidden>
@@ -522,6 +534,7 @@ addEventListener('DOMContentLoaded',()=>fetch(SUPABASE_URL+'/rest/v1/rpc/get_gal
 
 <div class="bones" aria-hidden="true"><i></i><svg><use href="#i-bone"/></svg><svg class="sk"><use href="#i-skull"/></svg><svg><use href="#i-bone"/></svg><i></i></div>
 <main id="quote">
+<div class="qbg" aria-hidden="true"><canvas id="qsky"></canvas></div>
 <svg class="dc w-main" aria-hidden="true"><use href="#i-web"/></svg><svg class="dc pk-main" aria-hidden="true"><use href="#i-pumpkin"/></svg>
 <div class="wrap">
   <h2>Let's get the details</h2>
@@ -850,22 +863,41 @@ $('cx').onclick=()=>{vm++;if(vm>11){vm=0;vy++}cal()};
 $('clr').onclick=()=>{sel=null;pick()};
 cal();loadTaken();
 
-/* starfield */
-const c=$('sky'),x=c.getContext('2d'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
-let S=[],W,H,mx=-999,my=-999;
-function size(){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;W=r.width;H=r.height;c.width=W*d;c.height=H*d;x.setTransform(d,0,0,d,0,0);
-  const g=()=>Math.random()+Math.random()+Math.random()-1.5;
-  S=Array.from({length:Math.min(1400,Math.round(W*H/650))},()=>{const u=Math.random(),yc=H*(.2+.3*u),hh=H*(.12+.12*Math.sin(u*3.14));
-    return{x:u*W,y:yc+g()*2*hh,r:Math.random()*1.2+.4,p:Math.random()*6.28,s:Math.random()*.0015+.0005}});if(rm)draw(0)}
-function draw(t){x.clearRect(0,0,W,H);
-  for(const s of S){const n=Math.max(0,1-Math.hypot(s.x-mx,s.y-my)/150),A=Math.min(1,.45+.35*Math.sin(s.p+t*s.s*6)+n*.6);
-    x.fillStyle=n>.2?'#d6b3ff':'#eaf3ff';
-    x.globalAlpha=A*.16;x.beginPath();x.arc(s.x,s.y,s.r*3.2+n*4,0,6.283);x.fill();
-    x.globalAlpha=A;x.beginPath();x.arc(s.x,s.y,s.r+n*1.6,0,6.283);x.fill()}
-  if(!rm)requestAnimationFrame(draw)}
-c.parentElement.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top});
-c.parentElement.addEventListener('pointerleave',()=>{mx=my=-999});
-addEventListener('resize',size);size();if(!rm)requestAnimationFrame(draw);
+
+/* hero film: plays only when allowed and on screen */
+(()=>{const v=$('hv');if(matchMedia('(prefers-reduced-motion:reduce)').matches||navigator.connection&&navigator.connection.saveData)return;
+  v.addEventListener('playing',()=>v.classList.add('on'),{once:true});
+  new IntersectionObserver(([e])=>e.isIntersecting?v.play().catch(()=>{}):v.pause()).observe(v)})();
+
+/* quote backdrop: fiber-optic stars (twinkle, drift with scroll, rare shooting star) + speaker rings that thump */
+(()=>{const c=$('qsky'),x=c.getContext('2d'),m=c.closest('main'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches,
+  COL=['#ffffff','#f3ecff','#e2d2ff','#b48cff','#a8dcff'];
+  let W=0,H,S=[],sh=null,nx=4e3,run=false;
+  function size(){const d=Math.min(devicePixelRatio||1,1.5),w=c.clientWidth;H=c.clientHeight;c.width=w*d;c.height=H*d;x.setTransform(d,0,0,d,0,0);
+    if(w!==W){W=w;S=Array.from({length:Math.min(650,Math.round(W*H/2300))},()=>{const z=Math.random();
+      return{x:Math.random()*W,y:Math.random()*H,z,r:.35+z*z*1.4,c:COL[Math.random()*COL.length|0],p:Math.random()*6.28,s:.3+Math.random()*1.4,g:z>.94}})}
+    if(!run)draw(performance.now())}
+  function ring(cx,cy,r,a){const g=x.createRadialGradient(cx,cy,r*.2,cx,cy,r*1.25);g.addColorStop(0,'rgba(164,106,240,0)');g.addColorStop(.8,'rgba(164,106,240,.5)');g.addColorStop(1,'rgba(164,106,240,0)');
+    x.globalAlpha=a*.35;x.fillStyle=g;x.beginPath();x.arc(cx,cy,r*1.25,0,6.283);x.fill();x.strokeStyle='#a46af0';
+    x.globalAlpha=a*.22;x.lineWidth=14;x.beginPath();x.arc(cx,cy,r,0,6.283);x.stroke();
+    x.globalAlpha=a*.5;x.lineWidth=5;x.stroke();
+    x.strokeStyle='#e6d4ff';x.globalAlpha=a;x.lineWidth=1.5;x.stroke()}
+  function draw(t){x.clearRect(0,0,W,H);const sy=scrollY;
+    if(W>900){const b=rm?0:Math.exp(-(t%857)/857*5),k=1+b*.02,a=.15+b*.22;
+      ring(W*.035,H*.8,H*.17*k,a);ring(W*.035,H*.8,H*.1*k,a*.7);ring(W*.975,H*.28,H*.2*k,a);ring(W*.975,H*.28,H*.12*k,a*.7)}
+    for(const s of S){const y=((s.y-sy*s.z*.12)%H+H)%H,w=.5+.5*Math.sin(s.p+t*.001*s.s),A=.18+.82*w*w*w*(.4+.6*s.z);
+      x.fillStyle=x.strokeStyle=s.c;
+      if(s.z>.6){x.globalAlpha=A*.13;x.beginPath();x.arc(s.x,y,s.r*3.4,0,6.283);x.fill()}
+      x.globalAlpha=A;x.beginPath();x.arc(s.x,y,s.r,0,6.283);x.fill();
+      if(s.g&&w>.6){const l=s.r*7*w;x.globalAlpha=A*.55;x.lineWidth=.7;x.beginPath();x.moveTo(s.x-l,y);x.lineTo(s.x+l,y);x.moveTo(s.x,y-l);x.lineTo(s.x,y+l);x.stroke()}}
+    if(!rm){if(!sh&&t>nx){const d=Math.random()<.5?-1:1;sh={x:W*(.2+Math.random()*.6),y:H*(.05+Math.random()*.3),vx:d*(.55+Math.random()*.3),vy:.22+Math.random()*.12,t0:t}}
+      if(sh){const e=(t-sh.t0)/1100;if(e>1){sh=null;nx=t+6e3+Math.random()*7e3}else{
+        const hx=sh.x+sh.vx*(t-sh.t0),hy=sh.y+sh.vy*(t-sh.t0),tl=150,n=Math.hypot(sh.vx,sh.vy),g=x.createLinearGradient(hx,hy,hx-sh.vx/n*tl,hy-sh.vy/n*tl);
+        g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(.3,'rgba(200,170,255,.35)');g.addColorStop(1,'rgba(164,106,240,0)');
+        x.globalAlpha=Math.sin(e*3.1416);x.strokeStyle=g;x.lineWidth=1.6;x.beginPath();x.moveTo(hx,hy);x.lineTo(hx-sh.vx/n*tl,hy-sh.vy/n*tl);x.stroke()}}}
+    x.globalAlpha=1;if(run)requestAnimationFrame(draw)}
+  addEventListener('resize',size);size();
+  if(!rm)new IntersectionObserver(([e])=>{const was=run;run=e.isIntersecting;if(run&&!was)requestAnimationFrame(draw)}).observe(m)})();
 </script>
 </body>
 </html>
