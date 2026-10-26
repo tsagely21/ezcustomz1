@@ -54,6 +54,10 @@ details summary{cursor:pointer;color:var(--vio);font-weight:600;margin:4px 0 8px
 a.sx{color:var(--vio)}input[type=file]{width:100%;padding:8px}.fl{display:grid;gap:4px;color:var(--mute);font-size:14px;margin:6px 0}
 .gpv{display:block;max-width:100%;max-height:260px;border-radius:10px;margin:8px 0}progress{width:100%;accent-color:var(--vio)}
 .gi{display:grid;grid-template-columns:90px 1fr;gap:12px}.gi>img{width:90px;height:112px;object-fit:cover;border-radius:10px;background:var(--bg)}.gi .rr{margin:6px 0}.gi .rr label{min-width:120px}.gi input,.gi select{width:100%}
+.mrow{display:flex;align-items:center;gap:12px;font-size:17px;cursor:pointer}.mrow input,.mj input{width:22px;height:22px;margin:0;accent-color:var(--vio);flex:none}
+.mn{flex:1;font-weight:600;word-break:break-word}.mq{font-size:20px}.mi details{margin:8px 0 0 34px}.mi summary{font-size:14px;margin:0}.mi.done .mn{color:var(--mute);text-decoration:line-through}
+.mj{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.mj label{flex:1;display:flex;gap:10px;align-items:center;cursor:pointer}.mj button{padding:6px 10px;font-size:13px}
+#ma .rr label.mqty{flex:0 1 100px;min-width:90px}#ma input,#ma select{width:100%}
 #gp .rr label,#gv .rr label{min-width:220px}.gi .acts{flex-wrap:wrap}.gi .acts button{min-width:64px;padding:8px 10px}.gi.off>img{opacity:.4}.mono{font:12px ui-monospace,Menlo,monospace;word-break:break-all}
 </style>
 </head>
@@ -75,6 +79,7 @@ a.sx{color:var(--vio)}input[type=file]{width:100%;padding:8px}.fl{display:grid;g
       <button role="tab" data-t="pending" aria-selected="true">New requests</button>
       <button role="tab" data-t="await" aria-selected="false">Awaiting deposit</button>
       <button role="tab" data-t="approved" aria-selected="false">Confirmed</button>
+      <button role="tab" data-t="mat" aria-selected="false" id="mtt">Materials</button>
       <button role="tab" data-t="closed" aria-selected="false">Declined / cancelled</button>
       <button role="tab" data-t="off" aria-selected="false">Days off</button>
       <button role="tab" data-t="rev" aria-selected="false" id="rvt">Reviews</button>
@@ -88,6 +93,14 @@ a.sx{color:var(--vio)}input[type=file]{width:100%;padding:8px}.fl{display:grid;g
       <p class="note">New reviews wait here until you approve them. Only approved reviews show on the public reviews page.</p>
       <div class="tabs sub" id="rvs"><button data-s="pending" aria-selected="true">Waiting</button><button data-s="approved" aria-selected="false">Live on site</button><button data-s="rejected" aria-selected="false">Hidden</button></div>
       <div id="rvl"></div>
+    </div>
+    <div id="mat" hidden>
+      <p class="note">Everything you need to buy for confirmed jobs. A job's parts show up here as soon as its deposit is paid. Tick an item once you've ordered it. Tap "For 2 jobs" to see who it's for, or to tick off just one of them.</p>
+      <div id="mtl"></div>
+      <form class="card" id="ma"><b>Add something to the list</b>
+        <div class="rr"><label>Item<input name="i" required maxlength="120" list="mtn" placeholder="e.g. 1000 twinkle starlight kit"></label><label class="mqty">How many<input name="q" type="number" min="1" max="99" value="1" required></label><label>For<select name="b"></select></label></div>
+        <datalist id="mtn"></datalist>
+        <button class="primary full">Add to list</button></form>
     </div>
     <div id="pay" hidden>
       <p class="note">Every time a customer ticks the agreement box and goes to checkout, a record is saved here with the exact terms they accepted. Records stay even if a booking is deleted or the terms change. Refunds are done in the Stripe Dashboard and show up here automatically.</p>
@@ -153,6 +166,7 @@ let token=sessionStorage.getItem('ezt')||'';
 const ERR={has_deposit:'This booking has a paid deposit, so it can only go back to Confirmed.',not_closed:'This booking is not cancelled or declined. Refreshing.',slot_taken:'That day is already confirmed for someone else.',not_pending:'This booking was already handled. Refreshing.',not_approved:'That booking is no longer confirmed. Refreshing.',not_admin:'This account is not set up as an admin.',not_found:'Booking not found.',bad_range:'"To" date is before "From" date.',range_too_long:'Pick a range of a year or less.',
   slot_held:'That day is held for another customer who has a deposit link. Release their hold first (Awaiting deposit tab).',day_blocked:'That day is marked as a day off. Remove it in Days off first.',
   bad_estimate:'Enter an estimated total between $1 and $100,000.',bad_deposit:'The deposit must be at least $1 and no more than the estimated total.',bad_hold:'Pick how long to hold the day.',invalid_date:'Pick a date after today.',
+  bad_item:'Type what the item is.',bad_qty:'"How many" has to be 1 to 99.',
   terms_locked:'Published terms can\'t be changed. Start a new version instead.',bad_version:'Version name: letters, numbers, dots or dashes only, like v2.',invalid_input:'The terms or checkbox text is too short or too long.'};
 const SETUP='Deposits aren\'t set up yet. Run supabase/deposits.sql in the Supabase SQL Editor.',NOSETUP=/could not find the function|pay_status|does not exist/i;
 async function api(path,opt={}){
@@ -170,10 +184,10 @@ $('login').onsubmit=async e=>{e.preventDefault();$('lm').textContent='';
   catch(x){$('lm').textContent=/invalid/i.test(x.message)?'Wrong email or password.':x.message}};
 let tab='pending';
 const Q={pending:'status=eq.pending&pay_status=eq.none',await:'status=eq.pending&pay_status=neq.none',approved:'status=eq.approved',closed:'status=in.(declined,cancelled)'};
-const VIEW={gal:['gal',()=>loadGal()],off:['off',()=>loadOff()],rev:['rev',()=>loadRev()],pay:['pay',()=>loadPay()],terms:['terms',()=>loadTerms()]};
+const VIEW={mat:['mat',()=>loadMat()],gal:['gal',()=>loadGal()],off:['off',()=>loadOff()],rev:['rev',()=>loadRev()],pay:['pay',()=>loadPay()],terms:['terms',()=>loadTerms()]};
 function setTab(t){tab=t;document.querySelectorAll('.tabs:not(.sub) button').forEach(x=>x.setAttribute('aria-selected',x.dataset.t===t))}
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;setTab(b.dataset.t);go()};
-function go(){const [v,f]=VIEW[tab]||['list',load];['list','off','rev','pay','terms','gal'].forEach(x=>$(x).hidden=x!==v);f();revCount()}
+function go(){const [v,f]=VIEW[tab]||['list',load];['list','off','rev','pay','terms','gal','mat'].forEach(x=>$(x).hidden=x!==v);f();revCount();if(tab!=='mat')matCount()}
 $('out').onclick=signOut;$('rf').onclick=go;
 const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 const fmtT=s=>new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'});
@@ -387,6 +401,40 @@ $('rvl').onclick=async e=>{const b=e.target.closest('button[data-r]');if(!b)retu
   b.disabled=true;let err='';
   try{del?await rpc('delete_review',{p_id:b.dataset.id}):await rpc('set_review_status',{p_id:b.dataset.id,p_status:b.dataset.r})}catch(x){err=x.message}
   await loadRev();revCount();if(err)$('am').textContent=err};
+
+/* materials: one row per item per job (supabase/materials.sql), shown grouped by item; ticking marks the rows ordered */
+const MSETUP='Materials isn\'t set up yet. Run supabase/materials.sql in the Supabase SQL Editor.';
+const fmtS=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+const mJob=m=>m.booking_id?[fmtS(m.slot_date),m.name,m.vehicle].filter(Boolean).join(', '):'General stock (not for one job)';
+function mGroups(rows){const g=new Map();
+  rows.forEach(m=>{const k=m.item.trim().toLowerCase();if(!g.has(k))g.set(k,{item:m.item.trim(),rows:[]});g.get(k).rows.push(m)});
+  return [...g.values()].sort((a,b)=>a.item.localeCompare(b.item,'en',{numeric:true,sensitivity:'base'}))} // 450 kit before 1000 kit
+function mCard(g,done){const ids=g.rows.map(m=>m.id).join(','),n=g.rows.reduce((s,m)=>s+m.qty,0),jobs=g.rows.length;
+  const last=done&&g.rows.map(m=>m.ordered_at).sort().pop();
+  return `<div class="card mi${done?' done':''}"><label class="mrow"><input type="checkbox" data-ids="${ids}"${done?' checked':''} aria-label="${esc(g.item)}, ${n}"><span class="mn">${esc(g.item)}</span><b class="mq">x${n}</b></label>
+    <details data-k="${done?1:0}${esc(g.item.toLowerCase())}"><summary>${jobs===1?'For 1 job':'For '+jobs+' jobs'}${last?', ordered '+esc(new Date(last).toLocaleDateString('en-US',{month:'short',day:'numeric'})):''}</summary>
+    ${g.rows.map(m=>`<div class="mj"><label><input type="checkbox" data-ids="${m.id}"${done?' checked':''}>${m.qty>1?'x'+m.qty+' ':''}${esc(mJob(m))}${m.auto?'':' (added by you)'}</label><button type="button" class="dec" data-del="${m.id}">Remove</button></div>`).join('')}</details></div>`}
+async function matCount(){try{const n=mGroups((await rpc('admin_list_materials')).filter(m=>!m.ordered_at)).length;$('mtt').textContent='Materials'+(n?' ('+n+')':'')}catch(_){}}
+async function loadMat(){
+  $('am').textContent='';
+  try{const [rows,jobs]=await Promise.all([rpc('admin_list_materials'),api(`/rest/v1/bookings?status=eq.approved&slot_date=gte.${isoD(new Date())}&select=id,slot_date,name,selections&order=slot_date.asc`)]);
+    const todo=mGroups(rows.filter(m=>!m.ordered_at)),got=mGroups(rows.filter(m=>m.ordered_at)),open=new Set([...$('mtl').querySelectorAll('details[open]')].map(d=>d.dataset.k));
+    $('mtt').textContent='Materials'+(todo.length?' ('+todo.length+')':'');
+    $('mtl').innerHTML=`<h2>To order</h2>${todo.length?todo.map(g=>mCard(g,false)).join(''):'<div class="empty">Nothing to order right now.</div>'}`
+      +(got.length?`<h2>Ordered</h2><p class="note">Untick if it still needs ordering. Ordered parts drop off this list after the job's date.</p>${got.map(g=>mCard(g,true)).join('')}`:'');
+    $('mtl').querySelectorAll('details').forEach(d=>d.open=open.has(d.dataset.k));
+    $('mtn').innerHTML=[...new Set(rows.map(m=>m.item.trim()))].map(i=>`<option value="${esc(i)}">`).join('');
+    const sel=$('ma').elements.b,keep=sel.value;
+    sel.innerHTML='<option value="">General stock (not for one job)</option>'+jobs.map(b=>`<option value="${b.id}">${esc([fmtS(b.slot_date),b.name,veh(b)].filter(Boolean).join(', '))}</option>`).join('');sel.value=keep}
+  catch(x){$('mtl').innerHTML='';$('am').textContent=REV_MISSING.test(x.message)?MSETUP:x.message}
+}
+async function matDo(el,fn,args){el.disabled=true;let err='';try{await rpc(fn,args)}catch(x){err=x.message}await loadMat();if(err)$('am').textContent=err}
+$('mtl').onchange=e=>{const c=e.target.closest('input[data-ids]');if(c)matDo(c,'admin_set_materials_ordered',{p_ids:c.dataset.ids.split(','),p_ordered:c.checked})};
+$('mtl').onclick=e=>{const b=e.target.closest('button[data-del]');if(!b)return;
+  if(!confirm('Remove this from the materials list?'))return;matDo(b,'admin_delete_material',{p_id:b.dataset.del})};
+$('ma').onsubmit=async e=>{e.preventDefault();const F=e.target.elements,btn=e.target.querySelector('button');
+  await matDo(btn,'admin_add_material',{p_item:F.i.value.trim(),p_qty:+F.q.value,p_booking:F.b.value||null});
+  btn.disabled=false;if(!$('am').textContent){F.i.value='';F.q.value=1}};
 /* gallery: files go to Storage bucket "gallery", cards to gallery_items (supabase/gallery.sql) */
 const GSETUP='The gallery isn\'t set up yet. Run supabase/gallery.sql in the Supabase SQL Editor.',GPUB=SUPABASE_URL+'/storage/v1/object/public/gallery/',MAXB=50*1048576;
 const PLACE={home:'Homepage ribbon + gallery page',gallery:'Gallery page only',hidden:'Taken down (not on the site)'};
