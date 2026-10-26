@@ -18,6 +18,7 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 | Reviews page | `reviews.html` (`get_reviews`, `submit_review`; reviews start `pending`) | backend.md |
 | Gallery page | `gallery.html` (`get_gallery`, all non-hidden; local `GALLERY` = offline fallback; `place` = `home`/`gallery`/`hidden`) | admin.md |
 | Deposit / terms pages | `pay.html` (`?t=<token>`), `terms.html` | backend.md > Deposits |
+| Refund & return policy | `refund.html` (static, no DB; deposits/completed work final, faulty supplied parts replaced). URL is set in Stripe's checkout store policies; linked in every footer | |
 | SMS helper for the bot | `text.html` (`noindex`) | backend.md > Telegram |
 | Media | `images/gallery/*.webp`, `images/hero/*`, `assets/` (icons, logo, og-image) | |
 
