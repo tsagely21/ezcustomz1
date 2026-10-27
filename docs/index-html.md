@@ -13,6 +13,6 @@ Single file (~115 KB): CSS, SVG sprites, markup, JS all inline. Inline `<script>
    - **Revert to pre-hero-film site:** tag `pre-hero-video` / branch `backup-before-hero-video` (`93cc3cf`): `git checkout pre-hero-video -- index.html`, commit, push.
 5. **Quote backdrop** (`#qsky` canvas in sticky `.qbg`): twinkling stars drifting with scroll, shooting star every 6-13 s, speaker-ring glows on wide screens. Pauses off screen; static frame for reduced motion.
 
-**Halloween sale** (retire after 2026-10-31): `SALE_OFF` / `SALE_END` (`'2026-10-31'`, America/Chicago) = $150 off every starlight package; banners `#hw`, `#hwn` remove themselves after. Decor = `i-pumpkin`/`i-web`/`i-skull`... `<symbol>`s and the second `:root{--org...}` CSS block; delete those to fully remove the theme.
+**Halloween decor** (remove after 2026-10-31; sale pricing was already removed 2026-10-15): `i-pumpkin`/`i-web`/`i-skull`... `<symbol>`s, the `.dc` decor elements, and the second `:root{--org...}` CSS block, in index, reviews and gallery.
 
 **Styling**: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` + `data-theme` override. Breakpoints 900px / 600px. `reviews.html` and `gallery.html` copy this CSS/sprites/header, so shared look changes go in all three.

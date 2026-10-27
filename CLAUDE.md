@@ -12,7 +12,7 @@ EZ CUSTOMZ (ezcustomz.co): marketing + quote/booking site for a custom car inter
 
 | Area | Files | Details |
 |---|---|---|
-| Homepage (gallery ribbon, quote form, calendar, hero film, sale) | `index.html` | [docs/index-html.md](docs/index-html.md) |
+| Homepage (gallery ribbon, quote form, calendar, hero film, Halloween decor) | `index.html` | [docs/index-html.md](docs/index-html.md) |
 | Admin panel (bookings, days off, reviews, gallery upload, materials) | `admin.html` | [docs/admin.md](docs/admin.md) |
 | Supabase DB, Stripe deposits, Telegram bot, emails | `supabase/*.sql`, `supabase/functions/*` | [docs/backend.md](docs/backend.md) |
 | Reviews page | `reviews.html` (`get_reviews`, `submit_review`; reviews start `pending`) | backend.md |
