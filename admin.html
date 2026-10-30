@@ -59,6 +59,9 @@ a.sx{color:var(--vio)}input[type=file]{width:100%;padding:8px}.fl{display:grid;g
 .mn{flex:1;font-weight:600;word-break:break-word}.mq{font-size:20px}.mi details{margin:8px 0 0 34px}.mi summary{font-size:14px;margin:0}.mi.done .mn{color:var(--mute);text-decoration:line-through}
 .mj{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.mj label{flex:1;display:flex;gap:10px;align-items:center;cursor:pointer}.mj button{padding:6px 10px;font-size:13px}
 #ma .rr label.mqty{flex:0 1 100px;min-width:90px}#ma input,#ma select{width:100%}
+.pm summary{display:flex;align-items:center;gap:12px;margin:0;color:var(--ink);list-style-position:inside}.pm summary .mn{font-size:17px}.pm small{display:block;font-weight:400;font-size:13px;color:var(--mute)}.pm summary b{font-size:20px;color:var(--ok)}
+.pj{padding:10px 0;border-top:1px solid var(--line);font-size:14px}.pj:first-of-type{margin-top:12px}.pj>div{display:flex;justify-content:space-between;gap:12px}.pj small{display:block;color:var(--mute)}.pj b{white-space:nowrap}.pj .off{color:var(--mute);font-weight:400}
+.pn{color:#e0a030;font-weight:600;margin-top:4px}
 #gp .rr label,#gv .rr label{min-width:220px}.gi .acts{flex-wrap:wrap}.gi .acts button{min-width:64px;padding:8px 10px}.gi.off>img{opacity:.4}.mono{font:12px ui-monospace,Menlo,monospace;word-break:break-all}
 </style>
 </head>
@@ -85,6 +88,7 @@ a.sx{color:var(--vio)}input[type=file]{width:100%;padding:8px}.fl{display:grid;g
       <button role="tab" data-t="off" aria-selected="false">Days off</button>
       <button role="tab" data-t="rev" aria-selected="false" id="rvt">Reviews</button>
       <button role="tab" data-t="pay" aria-selected="false">Payments</button>
+      <button role="tab" data-t="prof" aria-selected="false">Profit</button>
       <button role="tab" data-t="terms" aria-selected="false">Terms</button>
       <button role="tab" data-t="gal" aria-selected="false">Gallery</button>
     </div>
@@ -107,6 +111,10 @@ a.sx{color:var(--vio)}input[type=file]{width:100%;padding:8px}.fl{display:grid;g
       <p class="note">Every time a customer ticks the agreement box and goes to checkout, a record is saved here with the exact terms they accepted. Records stay even if a booking is deleted or the terms change. Refunds are done in the Stripe Dashboard and show up here automatically.</p>
       <div class="stat" id="pst"></div>
       <div id="pl"></div>
+    </div>
+    <div id="prof" hidden>
+      <p class="note">Estimated total minus the deposit, for every confirmed job with a paid deposit, grouped by the month of the job. Tap a month to see its jobs. Speaker builds that still need a price aren't counted until you add it under Confirmed, Final price.</p>
+      <div id="prl"></div>
     </div>
     <div id="terms" hidden>
       <p class="note">Customers must read these and tick the box before they can pay. Published versions can't be edited (customers' records point to them), so changes are saved as a new version, then published. Formatting: a line starting with <b>## </b> is a heading, <b>- </b> is a bullet, leave a blank line between paragraphs.</p>
@@ -185,10 +193,10 @@ $('login').onsubmit=async e=>{e.preventDefault();$('lm').textContent='';
   catch(x){$('lm').textContent=/invalid/i.test(x.message)?'Wrong email or password.':x.message}};
 let tab='pending';
 const Q={pending:'status=eq.pending&pay_status=eq.none',await:'status=eq.pending&pay_status=neq.none',approved:'status=eq.approved',closed:'status=in.(declined,cancelled)'};
-const VIEW={mat:['mat',()=>loadMat()],gal:['gal',()=>loadGal()],off:['off',()=>loadOff()],rev:['rev',()=>loadRev()],pay:['pay',()=>loadPay()],terms:['terms',()=>loadTerms()]};
+const VIEW={mat:['mat',()=>loadMat()],gal:['gal',()=>loadGal()],off:['off',()=>loadOff()],rev:['rev',()=>loadRev()],pay:['pay',()=>loadPay()],prof:['prof',()=>loadProf()],terms:['terms',()=>loadTerms()]};
 function setTab(t){tab=t;document.querySelectorAll('.tabs:not(.sub) button').forEach(x=>x.setAttribute('aria-selected',x.dataset.t===t))}
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;setTab(b.dataset.t);go()};
-function go(){const [v,f]=VIEW[tab]||['list',load];['list','off','rev','pay','terms','gal','mat'].forEach(x=>$(x).hidden=x!==v);f();revCount();if(tab!=='mat')matCount()}
+function go(){const [v,f]=VIEW[tab]||['list',load];['list','off','rev','pay','prof','terms','gal','mat'].forEach(x=>$(x).hidden=x!==v);f();revCount();if(tab!=='mat')matCount()}
 $('out').onclick=signOut;$('rf').onclick=go;
 const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 const fmtT=s=>new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'});
@@ -402,6 +410,21 @@ $('rvl').onclick=async e=>{const b=e.target.closest('button[data-r]');if(!b)retu
   b.disabled=true;let err='';
   try{del?await rpc('delete_review',{p_id:b.dataset.id}):await rpc('set_review_status',{p_id:b.dataset.id,p_status:b.dataset.r})}catch(x){err=x.message}
   await loadRev();revCount();if(err)$('am').textContent=err};
+
+/* estimated profit: total minus deposit per paid job, by job month. A speaker build still needs a price while its total hasn't gone above the form's estimate (or above the deposit, when the form said "Custom quote") */
+const pNeeds=b=>/^Speakers: /m.test(b.selections||'')&&b.estimate_cents<=(fromSel(b,/Estimate: \$([\d,.]+)/)??b.deposit_paid_cents);
+const pAmt=b=>b.estimate_cents-b.deposit_paid_cents+(b.refunded_cents||0);
+async function loadProf(){
+  $('am').textContent='';
+  try{const rows=(await api('/rest/v1/bookings?status=eq.approved&deposit_paid_cents=not.is.null&estimate_cents=not.is.null&select=id,slot_date,name,service,selections,estimate_cents,deposit_paid_cents,refunded_cents,stripe_livemode&order=slot_date.asc')).filter(b=>b.stripe_livemode!==false);
+    const ms=new Map(),open=new Set([...$('prl').querySelectorAll('details[open]')].map(d=>d.dataset.k));
+    rows.forEach(b=>{const k=b.slot_date.slice(0,7);if(!ms.has(k))ms.set(k,[]);ms.get(k).push(b)});
+    $('prl').innerHTML=[...ms.keys()].sort().reverse().map(k=>{const js=ms.get(k),need=js.filter(pNeeds).length,tot=js.reduce((s,b)=>s+(pNeeds(b)?0:pAmt(b)),0);
+      return `<details class="card pm" data-k="${k}"><summary><span class="mn">${esc(new Date(k+'-15T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}))}<small>${js.length===1?'1 job':js.length+' jobs'}${need?', '+need+' need'+(need===1?'s':'')+' a speaker price':''}</small></span><b>${usd(tot)}</b></summary>
+      ${js.map(b=>{const n=pNeeds(b);return `<div class="pj"><div><span>${esc([fmtS(b.slot_date),b.name,veh(b)].filter(Boolean).join(', '))}<small>${esc(b.service)}: ${usd(b.estimate_cents)} total, ${usd(b.deposit_paid_cents)} deposit${b.refunded_cents?', '+usd(b.refunded_cents)+' refunded':''}</small></span><b${n?' class="off"':''}>${n?'Not counted':usd(pAmt(b))}</b></div>${n?'<div class="pn">Needs price for speakers</div>':''}</div>`}).join('')}</details>`}).join('')||'<div class="empty">No paid deposits yet.</div>';
+    $('prl').querySelectorAll('details').forEach(d=>d.open=open.has(d.dataset.k))}
+  catch(x){$('prl').innerHTML='';$('am').textContent=x.message}
+}
 
 /* materials: one row per item per job (supabase/materials.sql), shown grouped by item; ticking marks the rows ordered */
 const MSETUP='Materials isn\'t set up yet. Run supabase/materials.sql in the Supabase SQL Editor.';
