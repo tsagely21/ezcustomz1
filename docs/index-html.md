@@ -12,8 +12,10 @@ Single file (~115 KB): CSS, SVG sprites, markup, JS all inline. Inline `<script>
 4. **Hero film** (`#hv` `<video>`): 33 s loop `images/hero/hero-1920.mp4` (phones: `hero-1280.mp4` via `<source media>`), poster `hero-poster.webp` (1920 wide) also the `.hero` background. If it never loads, the poster stays and the page works normally. Plays only on screen; skipped for `prefers-reduced-motion` and Save-Data. Blender render of a purple cartoon 350Z (starlight headliner, speaker rack beating at 100 bpm); scripts live outside the repo. The car model is CC BY 4.0: **keep the footer credit** (Black Snow, Sketchfab) while this video is used.
    - **Revert to the previous (OpenCV) hero film:** tag `pre-blender-hero`: `git checkout pre-blender-hero -- index.html images/hero docs/index-html.md`, commit, push.
    - **Revert to pre-hero-film site:** tag `pre-hero-video` / branch `backup-before-hero-video` (`93cc3cf`): `git checkout pre-hero-video -- index.html`, commit, push.
-5. **Quote backdrop** (`#qsky` canvas in sticky `.qbg`): twinkling stars drifting with scroll, shooting star every 6-13 s, speaker-ring glows on wide screens. Pauses off screen; static frame for reduced motion.
+5. **Quote backdrop** (`#qsky` canvas in sticky `.qbg`): twinkling stars drifting with scroll, shooting star every 6-13 s, speaker-ring glows on wide screens. Pauses off screen; static frame for reduced motion. The quote form and estimate are clear panels with a 4px blur over it, styled like the admin panel (`/* quote section */` CSS block); the section stays dark in light mode.
 
-**Halloween decor** (remove after 2026-10-31; sale pricing was already removed 2026-10-15): `i-pumpkin`/`i-web`/`i-skull`... `<symbol>`s, the `.dc` decor elements, and the second `:root{--org...}` CSS block, in index, reviews and gallery.
+**Accents**: neon purple/pink matching the header sign, in index, reviews and gallery (`--org` keeps its old name). Keep copy short: no captions that headings and labels already cover.
+
+**Header** (index, gallery, reviews, terms, refund, pay): centered `assets/neon-logo.webp` + glowing phone icon. Homepage only: black header and the write-on animation (inline script after `<header>`, strokes traced over the letters; reduced motion shows the lit sign).
 
 **Styling**: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` + `data-theme` override. Breakpoints 900px / 600px. `reviews.html` and `gallery.html` copy this CSS/sprites/header, so shared look changes go in all three.
