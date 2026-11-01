@@ -19,3 +19,5 @@ Single file (~115 KB): CSS, SVG sprites, markup, JS all inline. Inline `<script>
 **Header** (index, gallery, reviews, terms, refund, pay): centered `assets/neon-logo.webp` + glowing phone icon. Homepage only: black header and the write-on animation (inline script after `<header>`, strokes traced over the letters; reduced motion shows the lit sign).
 
 **Styling**: CSS custom properties on `:root`, dark mode via `prefers-color-scheme` + `data-theme` override. Breakpoints 900px / 600px. `reviews.html` and `gallery.html` copy this CSS/sprites/header, so shared look changes go in all three.
+
+**Christmas sale + decor** (ends by itself after 2026-12-25): `assets/xmas.js` holds `off`/`end` and injects all decor; `assets/xmas.css` is scoped to `html.xmas`. Prices in `index.html` (`data-p`, ambient `400`) are the regular prices, already $100 above the pre-sale ones; `SALE_OFF` takes $150 off each star package and ambient lighting while live. Afterwards the regular prices stay. To remove the code: delete both files and the two tags before `</head>` in index, reviews and gallery. Revert everything: tag `pre-christmas`.

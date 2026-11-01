@@ -1,0 +1,68 @@
+/* Christmas theme. Everything is scoped to html.xmas, which assets/xmas.js sets only while the sale is live. */
+.xnote,.xsave{display:block}
+.xnote[hidden],.xsave[hidden]{display:none}
+.xmas{--org:#ff3b4e;--org-d:#d3142b;--glow-o:rgba(255,59,78,.45)}
+
+/* sale strip */
+.xstrip{display:flex;justify-content:center;align-items:center;gap:6px 14px;flex-wrap:wrap;padding:8px 14px;color:#fff!important;text-decoration:none;font-size:14px;text-align:center;background:repeating-linear-gradient(-45deg,#c4122a 0 22px,#d9213a 22px 44px);position:relative;z-index:6}
+.xstrip b{font:800 15px var(--head,inherit);letter-spacing:.02em;text-transform:uppercase}
+.xstrip em{font-style:normal;font-weight:700;background:#fff;color:#a90f24;padding:2px 9px;border-radius:99px;font-size:12px}
+.xstrip:hover span{text-decoration:underline}
+
+/* header: bulbs + hat on the neon sign */
+.xmas header{position:relative;z-index:5}
+.xl{position:relative;z-index:5;height:0;overflow:visible;pointer-events:none}
+.xl{display:flex;overflow-x:clip}
+.xl-s{flex:none;display:block}
+.xb path{filter:drop-shadow(0 0 7px var(--c))}
+.xb{animation:xtw 1.5s ease-in-out infinite alternate}
+@keyframes xtw{from{opacity:1}to{opacity:.7}}
+.xmas .logo{position:relative}
+.xmas .logo .xhat{position:absolute;width:clamp(26px,12%,44px)!important;height:auto!important;inset:auto;left:7%;top:19%;transform:rotate(-14deg);pointer-events:none;z-index:3;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+
+/* hero */
+.xtag{display:inline-flex;align-items:center;gap:9px;margin:0 0 14px;padding:5px 13px 5px 5px;border-radius:99px;color:#fff;font-size:14px;font-weight:600;background:rgba(10,8,22,.62);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(6px)}
+.xmas .hero .xtag{white-space:nowrap}
+.xmas .hero .xtag span{color:#fff;padding:3px 10px;border-radius:99px;background:#d9213a;font-weight:800;font-size:12px;letter-spacing:.03em;text-transform:uppercase}
+.xmas .hero{overflow:hidden}
+.xo{position:absolute;top:0;z-index:2;display:flex;flex-direction:column;align-items:center;transform-origin:top center;animation:xsw 4.2s ease-in-out infinite alternate;pointer-events:none}
+.xo i{display:block;width:2px;background:rgba(255,255,255,.55)}
+.xo svg{display:block;width:44px;margin-top:-1px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
+.o1{right:7%;top:22px}.o2{right:15%;top:22px;animation-delay:-1.4s}.o2 svg{width:58px}.o3{right:23%;top:22px;animation-delay:-2.6s}.o3 svg{width:36px}
+@keyframes xsw{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+.xsl{position:absolute;z-index:1;top:58px;left:0;width:clamp(170px,22vw,300px);opacity:0;filter:drop-shadow(0 0 7px rgba(255,255,255,.5));animation:xfly 24s linear infinite;pointer-events:none}
+.xsl svg{display:block;width:100%;transform:scaleX(-1)}
+@keyframes xfly{0%{transform:translate(-110%,14px);opacity:0}2%{opacity:.9}40%{opacity:.9}44%{transform:translate(110vw,-40px);opacity:0}100%{transform:translate(110vw,-40px);opacity:0}}
+/* the art faces left; flipped above so it flies left to right */
+
+/* candy-cane and evergreen accents */
+.xmas .wrap>h2::after,.xmas .gal h2::after{background:repeating-linear-gradient(-45deg,#d9213a 0 8px,#fff 8px 16px);height:5px}
+.xmas .amt{background:linear-gradient(90deg,#fff,#ffc1c8);-webkit-background-clip:text;background-clip:text}
+.xmas .group{border-left-color:#1fae5f}
+.xmas .day.sel{background:linear-gradient(135deg,#ff3b4e,#b50f25)}
+.xmas .btn:not(.alt){background:linear-gradient(135deg,#e0202f,#a90f24)!important;box-shadow:0 10px 26px -10px rgba(224,32,47,.8)!important}
+.xmas .btn:not(.alt):hover{background:linear-gradient(135deg,#f23a48,#c4122a)!important}
+.xmas .type span s{color:#9a93ad;margin-right:3px}
+.xmas .type:has(input:checked)::after{color:#2fe07a}
+.xmas .pg .tag{background:#1fae5f!important}
+.xmas .type:has(input:checked),.xmas .pg button[aria-pressed=true]{border-color:#2fe07a!important;background:rgba(31,174,95,.16)!important;box-shadow:inset 0 0 0 1px #2fe07a,0 10px 24px -14px rgba(47,224,122,.7)!important}
+.xmas .pg .now,.xmas main .pg .now{color:#ff6b78}
+.xmas .pg .old{text-decoration-color:#ff3b4e}
+.xnote{margin:2px 0 12px;font-weight:600;font-size:14px;color:#ff8d98}
+.xsave{margin:0 0 8px;padding:6px 10px;border-radius:8px;font-weight:700;font-size:14px;color:#07331b;background:#5ff09c}
+
+/* page bottom */
+.xdrift{position:relative;height:70px;margin-top:40px;pointer-events:none;z-index:2}
+.xdrift>svg{position:absolute;inset:auto 0 -1px;width:100%;height:70px;display:block}
+.xgifts{position:absolute;right:clamp(16px,8vw,120px);bottom:26px;display:flex;align-items:flex-end;z-index:-1}
+.xg{width:64px;margin-left:-6px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))}
+.xg.b{width:46px}.xg.c{width:54px}
+.xmas footer.xf{border-top:0;background:#f4f7ff;color:#241a3a;position:relative;z-index:2}
+.xmas footer.xf a{color:#5b21b6}
+
+.xsnow{position:fixed;inset:0;width:100%;height:100%;z-index:40;pointer-events:none}
+
+@media(max-width:700px){.xmas .hero .xtag{font-size:12.5px;gap:7px}.xmas .hero .xtag span{font-size:10.5px;padding:3px 8px}
+  .xstrip{font-size:13px;padding:7px 10px}.xstrip b{font-size:13px}
+  .o1{right:3%}.o2{right:13%}.o3{display:none}.o2 svg{width:44px}.o1 svg{width:34px}.xg{width:46px}.xg.b{width:34px}.xg.c{width:40px}}
+@media(prefers-reduced-motion:reduce){.xb,.xo{animation:none}.xsl{display:none}}

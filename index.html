@@ -392,6 +392,8 @@ header{display:grid;grid-template-columns:1fr auto 1fr;padding:6px clamp(14px,5v
 .logo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.logo.wr img{opacity:0}.logo.lit img{animation:nf .9s linear both}
 @keyframes nf{0%{opacity:0}12%{opacity:.85}20%{opacity:.25}34%{opacity:1}44%{opacity:.5}58%,100%{opacity:1}}
 </style>
+<link rel="stylesheet" href="assets/xmas.css">
+<script src="assets/xmas.js"></script>
 </head>
 <body>
 <a class="skip" href="#quote">Skip to the quote form</a>
@@ -570,26 +572,27 @@ addEventListener('DOMContentLoaded',()=>fetch(SUPABASE_URL+'/rest/v1/rpc/get_gal
         <div class="types">
           <label class="type"><input type="checkbox" name="project_type" value="Starlight headliner"><b>Starlights</b></label>
           <label class="type"><input type="checkbox" name="project_type" value="Speaker box / rack"><b>Speaker box or rack</b></label>
-          <label class="type"><input type="checkbox" name="project_type" value="Ambient lighting"><b>Ambient lighting</b><span>$300</span></label>
+          <label class="type"><input type="checkbox" name="project_type" value="Ambient lighting"><b>Ambient lighting</b><span id="ambp">$400</span></label>
         </div>
 
         <div class="group" id="sl" hidden>
           <h3>Starlight setup</h3>
           <b class="pgh">Star count</b>
+          <p class="xnote" id="xnote" hidden>Christmas sale: $150 off every package. Old price crossed out.</p>
           <div class="pg" id="pg" tabindex="-1" role="group" aria-label="Pick a star count"></div>
           <div class="row">
             <label class="f" hidden>Star count<select id="pkg" name="starlight_package"><option value="" data-p="0">Select a package</option>
-              <option value="450 stars ($400)" data-p="400" data-n="450">450 stars: $400</option>
-              <option value="550 stars ($475)" data-p="475" data-n="550">550 stars: $475</option>
-              <option value="650 stars ($550)" data-p="550" data-n="650">650 stars: $550</option>
-              <option value="750 stars ($625)" data-p="625" data-n="750">750 stars: $625</option>
-              <option value="850 stars ($700)" data-p="700" data-n="850">850 stars: $700</option>
-              <option value="1000 stars ($800)" data-p="800" data-n="1000">1000 stars: $800</option>
-              <option value="1100 stars ($875)" data-p="875" data-n="1100">1100 stars: $875</option>
-              <option value="1200 stars ($950)" data-p="950" data-n="1200">1200 stars: $950</option>
-              <option value="1300 stars ($1,025)" data-p="1025" data-n="1300">1300 stars: $1,025</option>
-              <option value="1400 stars ($1,100)" data-p="1100" data-n="1400">1400 stars: $1,100</option>
-              <option value="1500 stars ($1,175)" data-p="1175" data-n="1500">1500 stars: $1,175</option></select></label>
+              <option value="450 stars ($500)" data-p="500" data-n="450">450 stars: $500</option>
+              <option value="550 stars ($575)" data-p="575" data-n="550">550 stars: $575</option>
+              <option value="650 stars ($650)" data-p="650" data-n="650">650 stars: $650</option>
+              <option value="750 stars ($725)" data-p="725" data-n="750">750 stars: $725</option>
+              <option value="850 stars ($800)" data-p="800" data-n="850">850 stars: $800</option>
+              <option value="1000 stars ($900)" data-p="900" data-n="1000">1000 stars: $900</option>
+              <option value="1100 stars ($975)" data-p="975" data-n="1100">1100 stars: $975</option>
+              <option value="1200 stars ($1,050)" data-p="1050" data-n="1200">1200 stars: $1,050</option>
+              <option value="1300 stars ($1,125)" data-p="1125" data-n="1300">1300 stars: $1,125</option>
+              <option value="1400 stars ($1,200)" data-p="1200" data-n="1400">1400 stars: $1,200</option>
+              <option value="1500 stars ($1,275)" data-p="1275" data-n="1500">1500 stars: $1,275</option></select></label>
             <label class="f">Upgrades<select id="up" name="starlight_upgrades">
               <option value="" data-p="0">No extra upgrades</option>
               <option value="Shooting stars" data-p="200">Shooting stars: +$200</option>
@@ -662,6 +665,7 @@ addEventListener('DOMContentLoaded',()=>fetch(SUPABASE_URL+'/rest/v1/rpc/get_gal
     <aside aria-live="polite">
       <h3>Your estimate</h3>
       <div class="amt" id="amt">&mdash;</div>
+      <p class="xsave" id="xsave" hidden></p>
       <p class="help" id="help">Pick a package to see your estimate.</p>
       <div class="ln"><span>Services</span><b id="pl">Not selected</b></div>
       <div class="ln"><span>Selected options</span><b id="ol">&mdash;</b></div>
@@ -697,14 +701,18 @@ $('mk').onchange=()=>{const k=$('mk').value;$('md').innerHTML=opts(k?M[k].concat
 $('md').onchange=()=>{vo();rec()};
 function vo(){const om=$('mk').value==='Other',od=$('md').value===OTH;$('vow').hidden=!(om||od);$('xmkw').hidden=!om;$('xmdw').hidden=!od}
 const veh=()=>{const om=$('mk').value==='Other',od=$('md').value===OTH,t=$('vtr').value.trim();return [$('yr').value,om?$('xmk').value.trim():$('mk').value,od?$('xmd').value.trim():$('md').value].join(' ')+(t?' ('+t+')':'')};
+/* CHRISTMAS SALE: edit in assets/xmas.js. After XMAS.end the page charges the regular prices above on its own. */
+const X=window.XMAS||{},SALE_OFF=X.live?X.off:0,AMB=400-SALE_OFF,usd$=n=>'$'+n.toLocaleString();
 [...$('pkg').options].forEach(o=>{if(!o.dataset.n)return;
+  if(SALE_OFF){const reg=+o.dataset.p,now=reg-SALE_OFF;o.dataset.reg=reg;o.dataset.p=now;o.value=o.dataset.n+' stars ('+usd$(now)+' Christmas sale, reg. '+usd$(reg)+')';o.textContent=o.dataset.n+' stars: '+usd$(now)}
   o.dataset.c=o.textContent;
   o.dataset.l=o.textContent});
+if(SALE_OFF){$('xnote').hidden=false;$('ambp').innerHTML='<s>'+usd$(400)+'</s> '+usd$(AMB)}
 function chips(){
   const g=$('pg');if(!g)return;
   g.innerHTML=[...$('pkg').options].filter(o=>o.dataset.n).map(o=>{
-    const now='$'+(+o.dataset.p).toLocaleString();
-    return `<button type="button" data-v="${o.value.replace(/"/g,'&quot;')}" aria-pressed="${o.value===$('pkg').value}">${/recommended/.test(o.textContent)?'<span class="tag">Recommended</span>':''}<span>${o.dataset.n} stars</span><span class="now">${now}</span></button>`}).join('');
+    const now=usd$(+o.dataset.p),reg=o.dataset.reg?usd$(+o.dataset.reg):'';
+    return `<button type="button" data-v="${o.value.replace(/"/g,'&quot;')}" aria-pressed="${o.value===$('pkg').value}">${/recommended/.test(o.textContent)?'<span class="tag">Recommended</span>':''}<span>${o.dataset.n} stars</span>${reg?`<span class="old" aria-label="was ${reg}">${reg}</span>`:''}<span class="now">${now}</span></button>`}).join('');
 }
 $('pg').onclick=e=>{const b=e.target.closest('button');if(!b)return;$('pkg').value=b.dataset.v;$('pkg').dispatchEvent(new Event('change',{bubbles:true}))};
 function rec(){
@@ -730,8 +738,9 @@ function sync(){
     if($('logo').checked)opt.push('Custom logo');
     if($('own').selectedOptions[0].dataset.d==='50')opt.push('Own kit, $50 off');
   }
-  const sub=st&&tot?tot:0,amount=sub+(am?300:0),q=!amount&&sp,a=$('amt');
+  const sub=st&&tot?tot:0,amount=sub+(am?AMB:0),q=!amount&&sp,a=$('amt');
   a.classList.toggle('q',q);
+  const sv=SALE_OFF*((sub?1:0)+(am?1:0));$('xsave').hidden=!sv;$('xsave').textContent=sv?'Christmas sale: you save '+usd$(sv):'';
   a.innerHTML=amount?'$'+amount.toLocaleString()+'<small>USD</small>':q?'Custom quote':'&mdash;';
   const bits=[];if(st&&tot)bits.push('starlight package and options');if(am)bits.push('ambient lighting');
   $('help').textContent=amount?'Estimated '+bits.join(' + ')+'.'+(sp?' Speaker build is quoted separately.':'')+(st&&!tot?' Pick a package to add it.':''):q?'Final pricing follows review of your speaker build.':'Pick a package to see your estimate.';

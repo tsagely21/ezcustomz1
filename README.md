@@ -48,7 +48,7 @@ Then visit <http://localhost:8000>.
 ## Common edits
 
 - **Gallery**: edit the `GALLERY` list at the top of the gallery script in `index.html`.
-- **Sale**: change `SALE_OFF` and `SALE_END` in `index.html`.
+- **Sale**: change `off` and `end` in `assets/xmas.js`.
 - **Days off**: use the *Days off* tab in the admin panel. First-time setup: run `supabase/days_off.sql` in the Supabase SQL Editor.
 
 ## Deployment
