@@ -702,7 +702,7 @@ $('md').onchange=()=>{vo();rec()};
 function vo(){const om=$('mk').value==='Other',od=$('md').value===OTH;$('vow').hidden=!(om||od);$('xmkw').hidden=!om;$('xmdw').hidden=!od}
 const veh=()=>{const om=$('mk').value==='Other',od=$('md').value===OTH,t=$('vtr').value.trim();return [$('yr').value,om?$('xmk').value.trim():$('mk').value,od?$('xmd').value.trim():$('md').value].join(' ')+(t?' ('+t+')':'')};
 /* CHRISTMAS SALE: edit in assets/xmas.js. After XMAS.end the page charges the regular prices above on its own. */
-const X=window.XMAS||{},SALE_OFF=X.live?X.off:0,AMB=400-SALE_OFF,usd$=n=>'$'+n.toLocaleString();
+const X=window.XMAS||{},SALE_OFF=X.live?X.off:0,AMB=SALE_OFF?300:400,usd$=n=>'$'+n.toLocaleString();
 [...$('pkg').options].forEach(o=>{if(!o.dataset.n)return;
   if(SALE_OFF){const reg=+o.dataset.p,now=reg-SALE_OFF;o.dataset.reg=reg;o.dataset.p=now;o.value=o.dataset.n+' stars ('+usd$(now)+' Christmas sale, reg. '+usd$(reg)+')';o.textContent=o.dataset.n+' stars: '+usd$(now)}
   o.dataset.c=o.textContent;
@@ -740,7 +740,7 @@ function sync(){
   }
   const sub=st&&tot?tot:0,amount=sub+(am?AMB:0),q=!amount&&sp,a=$('amt');
   a.classList.toggle('q',q);
-  const sv=SALE_OFF*((sub?1:0)+(am?1:0));$('xsave').hidden=!sv;$('xsave').textContent=sv?'Christmas sale: you save '+usd$(sv):'';
+  const sv=(sub?SALE_OFF:0)+(am?400-AMB:0);$('xsave').hidden=!sv;$('xsave').textContent=sv?'Christmas sale: you save '+usd$(sv):'';
   a.innerHTML=amount?'$'+amount.toLocaleString()+'<small>USD</small>':q?'Custom quote':'&mdash;';
   const bits=[];if(st&&tot)bits.push('starlight package and options');if(am)bits.push('ambient lighting');
   $('help').textContent=amount?'Estimated '+bits.join(' + ')+'.'+(sp?' Speaker build is quoted separately.':'')+(st&&!tot?' Pick a package to add it.':''):q?'Final pricing follows review of your speaker build.':'Pick a package to see your estimate.';

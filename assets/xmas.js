@@ -21,7 +21,7 @@ function ready(){
   var b=document.body,h=document.querySelector('header'),hero=document.querySelector('.hero'),hi=document.querySelector('.hero-in');
   var q=hero?'#quote':'index.html#quote';
   /* sale strip on every page */
-  var st=document.createElement('a');st.className='xstrip';st.href=q;st.innerHTML='<b>Christmas Sale</b><span>$'+off+' off starlights &amp; ambient lighting</span><em>'+days()+'</em>';
+  var st=document.createElement('a');st.className='xstrip';st.href=q;st.innerHTML='<b>Christmas Sale</b><span>$'+off+' off starlights, $100 off ambient lighting</span><em>'+days()+'</em>';
   if(h){h.parentNode.insertBefore(st,h);h.insertAdjacentHTML('afterend',lights());var lg=h.querySelector('.logo');if(lg)lg.insertAdjacentHTML('beforeend',HAT)}
   /* hero: headline tag, ornaments, flying sleigh */
   if(hero){if(hi)hi.insertAdjacentHTML('afterbegin','<p class="xtag"><span>Christmas Sale</span> $'+off+' off, through Dec 25</p>');
