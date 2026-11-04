@@ -10,6 +10,7 @@ Supabase project `umvdxjnhzehcoujrishh`. Base tables, `bookings` RPCs and `is_ad
 ## Bookings
 - Statuses: `pending`, `approved`, `declined`, `cancelled`. Approved blocks the whole day publicly.
 - `reject_blocked_booking` before-insert trigger raises `day_blocked`; site surfaces `slot_taken`, `day_blocked`, `too_many_requests`.
+- Squeeze-ins (`squeeze.sql`): `bookings.squeeze`; a squeeze-in can share a day whose confirmed work is ambient lighting only, max one per day. Every "is this day taken" check goes through `day_taken(day, squeeze, except_id)`; two partial unique indexes back it up.
 - Cancelling an approved booking copies the day into `blocked_days` (owner releases it in Days off).
 
 ## Deposits (Stripe) — `deposits.sql`, `supabase/STRIPE_SETUP.md`

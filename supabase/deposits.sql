@@ -201,7 +201,7 @@ begin
   if not found then raise exception 'not_found'; end if;
   if b.status <> 'pending' or b.pay_status not in ('none', 'awaiting') then raise exception 'not_pending'; end if;
   perform public.lock_day(b.slot_date);
-  if exists (select 1 from public.bookings where slot_date = b.slot_date and status = 'approved') then raise exception 'slot_taken'; end if;
+  if public.day_taken(b.slot_date, b.squeeze, b.id) then raise exception 'slot_taken'; end if;
   if exists (select 1 from public.blocked_days where day = b.slot_date) then raise exception 'day_blocked'; end if;
   if public.day_held(b.slot_date, b.id) then raise exception 'slot_held'; end if;
   update public.bookings set estimate_cents = p_estimate_cents, deposit_cents = p_deposit_cents, pay_status = 'awaiting',
@@ -251,7 +251,7 @@ begin
   if p_date is null or p_date <= (now() at time zone 'America/Chicago')::date then raise exception 'invalid_date'; end if;
   if p_date = b.slot_date and b.status = 'approved' then return; end if;
   perform public.lock_day(p_date);
-  if exists (select 1 from public.bookings where slot_date = p_date and status = 'approved' and id <> p_id) then raise exception 'slot_taken'; end if;
+  if public.day_taken(p_date, b.squeeze, p_id) then raise exception 'slot_taken'; end if;
   if exists (select 1 from public.blocked_days where day = p_date) then raise exception 'day_blocked'; end if;
   if public.day_held(p_date, p_id) then raise exception 'slot_held'; end if;
   if b.status = 'approved' and b.slot_date >= (now() at time zone 'America/Chicago')::date then
@@ -286,7 +286,7 @@ begin
   perform public.lock_day(d);
   delete from public.blocked_days where day = d and note like 'Cancelled booking (' || left(b.name, 150) || ')%';
   if exists (select 1 from public.blocked_days where day = d) then raise exception 'day_blocked'; end if;
-  if exists (select 1 from public.bookings where slot_date = d and status = 'approved' and id <> p_id) then raise exception 'slot_taken'; end if;
+  if public.day_taken(d, b.squeeze, p_id) then raise exception 'slot_taken'; end if;
   if public.day_held(d, p_id) then raise exception 'slot_held'; end if;
   update public.bookings set status = 'approved', slot_date = d, decided_at = now(), hold_until = null,
     pay_status = case when pay_status = 'awaiting' then 'none' else pay_status end where id = p_id;
@@ -405,7 +405,7 @@ begin
     reason := case when b.payment_intent_id is not null then 'A second deposit was paid for a booking that was already paid. Refund one of them in Stripe.'
                    else 'The deposit link had been released or the booking was no longer pending.' end;
   elsif a.id is null then reason := 'No agreement on file for this checkout session.';
-  elsif exists (select 1 from public.bookings where slot_date = b.slot_date and status = 'approved' and id <> b.id) then reason := 'Another booking is already confirmed for that day.';
+  elsif public.day_taken(b.slot_date, b.squeeze, b.id) then reason := 'Another booking is already confirmed for that day.';
   elsif exists (select 1 from public.blocked_days where day = b.slot_date) then reason := 'That day was marked as a day off.';
   elsif public.day_held(b.slot_date, b.id) then reason := 'That day is held for another customer.';
   end if;
