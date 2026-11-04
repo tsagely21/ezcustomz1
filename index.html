@@ -869,7 +869,7 @@ function cal(){
   $('cx').disabled=vy===maxD.getFullYear()&&vm===maxD.getMonth(); // bookings open up to a year out (create_booking_request rejects later dates)
 }
 function pick(){const t=sel?sel.toLocaleDateString('en-US',fmt):'';$('pd').value=t;$('pk').textContent=t||'No date selected yet';$('clr').hidden=!sel;cal();refresh()}
-$('cd').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b||b.disabled)return;sel=new Date(vy,vm,+b.dataset.d);pick()});
+$('cd').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b||b.disabled)return;sel=new Date(vy,vm,+b.dataset.d);if($('sq').checked&&!sqz.has(iso(sel))){$('sq').checked=false;sync()}pick()}); // open day picked: no squeeze-in needed
 $('cp').onclick=()=>{vm--;if(vm<0){vm=11;vy--}cal()};
 $('cx').onclick=()=>{vm++;if(vm>11){vm=0;vy++}cal()};
 $('clr').onclick=()=>{sel=null;pick()};
