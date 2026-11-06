@@ -14,6 +14,8 @@ const RESEND_FROM = Deno.env.get('RESEND_FROM') ?? '';
 const SB_URL = Deno.env.get('SUPABASE_URL')!;
 const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const crypto = Stripe.createSubtleCryptoProvider();
+const SHOP = '2138 Wooddale Blvd, Baton Rouge, LA';
+const RIDE = 'Please arrange a ride, since your vehicle will stay with us for the day.';
 
 async function rpc(fn: string, args: Record<string, unknown>) {
   const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
@@ -54,21 +56,22 @@ async function resend(to: string, subject: string, text: string, html: string) {
 // deno-lint-ignore no-explicit-any
 async function confirmed(p: any) {
   const rows: [string, string][] = [
-    ['Customer', p.name], ['Vehicle', p.vehicle ?? 'See your quote'], ['Service', p.service], ['Appointment date', day(p.slot_date)],
+    ['Customer', p.name], ['Vehicle', p.vehicle ?? 'See your quote'], ['Service', p.service], ['Appointment date', day(p.slot_date)], ['Drop-off location', SHOP],
     ['Estimated total', usd(p.estimate_cents)], ['Deposit paid', usd(p.deposit_paid_cents)], ['Estimated remaining balance', usd(p.remaining_cents)],
   ];
   const terms = `${SITE}/terms.html`, status = `${SITE}/pay.html?t=${p.pay_token}`;
   const text = [`EZ CUSTOMZ: your appointment is confirmed`, '', `Hi ${p.name},`, '', `Your deposit was received and your appointment is confirmed. Here are the details:`, '',
-    ...rows.map(([k, v]) => `${k}: ${v}`), '',
+    ...rows.map(([k, v]) => `${k}: ${v}`), '', RIDE, '',
     `You accepted the EZ CUSTOMZ Deposit & Payment Terms (version ${p.terms_version}) on ${new Date(p.accepted_at).toLocaleString('en-US', { timeZone: 'America/Chicago' })} Central.`,
     `Deposits are nonrefundable except where required by law and are credited toward your total. The remaining balance is due when the work is complete, before the vehicle is released. The estimate can change only as described in the terms, and we will ask for your approval before any additional work that increases the price.`,
-    `Full terms: ${terms}`, `Your booking: ${status}`, '', 'Questions? Call or text 225.615.4554.', 'EZ CUSTOMZ, Baton Rouge, Louisiana'].join('\n');
+    `Full terms: ${terms}`, `Your booking: ${status}`, '', 'Questions? Call or text 225.615.4554.', `EZ CUSTOMZ, ${SHOP}`].join('\n');
 
   let customerSent = false;
   if (RESEND && RESEND_FROM && p.email) {
     const html = `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;color:#1a1428"><div style="background:#0f0a20;color:#fff;padding:18px 22px;border-radius:12px 12px 0 0;font-weight:700;font-size:20px">EZ CUSTOMZ</div>
 <div style="border:1px solid #e3dded;border-top:0;border-radius:0 0 12px 12px;padding:22px"><h2 style="margin:0 0 8px;color:#6d33b8">Your appointment is confirmed</h2><p>Hi ${esc(p.name)}, your deposit was received. Here are the details:</p>
 <table style="width:100%;border-collapse:collapse">${rows.map(([k, v]) => `<tr><td style="padding:6px 0;color:#6b6478">${esc(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600">${esc(v)}</td></tr>`).join('')}</table>
+<p style="font-weight:600">${esc(RIDE)}</p>
 <p style="font-size:14px;color:#6b6478">You accepted the EZ CUSTOMZ Deposit &amp; Payment Terms (version ${esc(p.terms_version)}). Deposits are nonrefundable except where required by law and are credited toward your total. The remaining balance is due when the work is complete, before the vehicle is released.</p>
 <p><a href="${esc(terms)}" style="color:#6d33b8">Read the full Deposit &amp; Payment Terms</a> · <a href="${esc(status)}" style="color:#6d33b8">View your booking</a></p><p>Questions? Call or text 225.615.4554.</p></div></div>`;
     customerSent = await resend(p.email, 'Your EZ CUSTOMZ appointment is confirmed', text, html);

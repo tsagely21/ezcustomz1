@@ -551,6 +551,7 @@ addEventListener('DOMContentLoaded',()=>fetch(SUPABASE_URL+'/rest/v1/rpc/get_gal
     <form id="qf" novalidate>
       <input type="hidden" name="_subject" value="New quote request from EZ CUSTOMZ site">
       <input type="hidden" name="summary" id="sum">
+      <input type="hidden" name="_autoresponse" id="ar">
       <p hidden><label>Leave this empty: <input name="_gotcha" tabindex="-1" autocomplete="off"></label></p>
       <fieldset>
         <legend>Your vehicle</legend>
@@ -836,6 +837,7 @@ $('qf').addEventListener('submit',async e=>{
   if($('em').value.trim())L.push('Email: '+$('em').value.trim());
   if($('nt').value.trim())L.push('Notes: '+$('nt').value.trim());
   $('msg').value=L.join('\n');$('sum').value=$('msg').value;
+  $('ar').value='Thanks for your quote request with EZ CUSTOMZ! We received it and will review your details. Once your quote is approved, we will email you a link to pay your deposit and lock in your date.\n\nHere is what you sent us:\n'+$('msg').value+'\n\nQuestions? Call or text 225.615.4554.\nEZ CUSTOMZ, 2138 Wooddale Blvd, Baton Rouge, LA';
   linkUp();
   const btn=e.submitter;if(btn)btn.disabled=true;
   let booked=false;
