@@ -15,6 +15,8 @@ const SB_URL = Deno.env.get('SUPABASE_URL')!;
 const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const crypto = Stripe.createSubtleCryptoProvider();
 const SHOP = '2138 Wooddale Blvd, Baton Rouge, LA';
+// '08:30:00' -> '8:30 AM'
+const hm = (t: string | null) => { if (!t) return "We'll text you your drop-off time"; const [h, m] = t.split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
 const RIDE = 'Please arrange a ride, since your vehicle will stay with us for the day.';
 
 async function rpc(fn: string, args: Record<string, unknown>) {
@@ -56,7 +58,7 @@ async function resend(to: string, subject: string, text: string, html: string) {
 // deno-lint-ignore no-explicit-any
 async function confirmed(p: any) {
   const rows: [string, string][] = [
-    ['Customer', p.name], ['Vehicle', p.vehicle ?? 'See your quote'], ['Service', p.service], ['Appointment date', day(p.slot_date)], ['Drop-off location', SHOP],
+    ['Customer', p.name], ['Vehicle', p.vehicle ?? 'See your quote'], ['Service', p.service], ['Appointment date', day(p.slot_date)], ['Drop-off time', hm(p.dropoff_time)], ['Drop-off location', SHOP],
     ['Estimated total', usd(p.estimate_cents)], ['Deposit paid', usd(p.deposit_paid_cents)], ['Estimated remaining balance', usd(p.remaining_cents)],
   ];
   const terms = `${SITE}/terms.html`, status = `${SITE}/pay.html?t=${p.pay_token}`;
@@ -79,7 +81,7 @@ async function confirmed(p: any) {
   await formsubmit({
     _subject: `Deposit paid: ${p.name}, ${day(p.slot_date)}`,
     Status: 'Confirmed, deposit paid. The day is now booked on the calendar.',
-    name: p.name, email: p.email, Phone: p.phone ?? '', Vehicle: p.vehicle ?? '', Service: p.service, 'Appointment date': day(p.slot_date),
+    name: p.name, email: p.email, Phone: p.phone ?? '', Vehicle: p.vehicle ?? '', Service: p.service, 'Appointment date': day(p.slot_date), 'Drop-off time': hm(p.dropoff_time),
     'Estimated total': usd(p.estimate_cents), 'Deposit paid': usd(p.deposit_paid_cents), 'Remaining balance': usd(p.remaining_cents),
     'Terms accepted': `${p.terms_version} at ${p.accepted_at}`, 'Stripe payment': p.payment_intent,
     ...(customerSent ? {} : { _autoresponse: text }),

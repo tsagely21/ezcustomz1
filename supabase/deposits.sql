@@ -425,7 +425,7 @@ begin
     'booking_id', b.id, 'name', b.name, 'email', b.email, 'phone', b.phone, 'slot_date', b.slot_date, 'service', b.service,
     'vehicle', public.vehicle_of(b.selections), 'estimate_cents', b.estimate_cents, 'deposit_paid_cents', p_amount_cents,
     'remaining_cents', b.estimate_cents - p_amount_cents, 'terms_version', a.terms_version, 'accepted_at', a.accepted_at,
-    'payment_intent', p_payment_intent, 'session_id', p_session_id, 'pay_token', b.pay_token);
+    'payment_intent', p_payment_intent, 'session_id', p_session_id, 'pay_token', b.pay_token, 'dropoff_time', b.dropoff_time);
 end $$;
 
 create or replace function public.deposit_mark_expired(p_event_id text, p_session_id text)

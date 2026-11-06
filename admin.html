@@ -310,7 +310,8 @@ function money(b){if(b.estimate_cents==null)return'';const p=b.deposit_paid_cent
   return `<div class="money">${m.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>`+(b.payment_intent_id?`<p class="note">Stripe payment <a class="sx mono" href="${stripeUrl(b.payment_intent_id,b.stripe_livemode)}" target="_blank" rel="noopener">${esc(b.payment_intent_id)}</a>${b.stripe_livemode===false?' (test mode)':''}${b.deposit_paid_at?', paid '+esc(fmtT(b.deposit_paid_at)):''}</p>`:'')}
 const linkForm=(b,est,dep,lbl)=>`<form class="box" data-f="link" data-id="${b.id}"><b>${lbl}</b>
   <div class="rr"><label>Estimated total ($)<input name="e" inputmode="decimal" required value="${esc(dol(est))}"></label><label>Deposit ($)<input name="d" inputmode="decimal" required value="${esc(dol(dep))}"></label>
-  <label>Hold the day for<select name="h"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label></div>
+  <label>Hold the day for<select name="h"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label>
+  <label>Drop-off time<input type="time" name="t" required value="${esc((b.dropoff_time||'').slice(0,5))}"></label></div>
   <label class="chk"><input type="checkbox" name="m"${b.pay_status==='awaiting'?'':' checked'}> ${b.pay_status==='awaiting'?'Email the customer again (their link stays the same)':'Email the link to '+esc(b.email)}</label>
   <label class="nt">Note to the customer (optional, goes in the email)<textarea name="n" rows="3" maxlength="1500" placeholder="e.g. Thanks for choosing us! Please arrive by 9 AM and bring your spare key."></textarea></label>
   <button class="primary full">${b.pay_status==='awaiting'?'Update amounts and restart the hold':'Approve and create deposit link'}</button></form>`;
@@ -322,10 +323,10 @@ async function mailLink(b){
     if(['send_failed','not_found','not_admin'].includes(j.error))return 'Email service said: '+(j.message||j.error)}catch(_){} // real failure; anything else = not set up yet
   return mailFS(b)}
 async function mailFS(b){const l=location.origin+'/pay.html?t='+b.pay_token,v=veh(b);
-  const t=[`Hi ${b.name.split(' ')[0]},`,'',`Good news: your EZ CUSTOMZ quote is approved!`,'',...(b.note?['A note from EZ CUSTOMZ:',b.note,'']:[]),...(v?[`Vehicle: ${v}`]:[]),`Service: ${b.service}`,`Appointment date: ${fmtD(b.slot_date)}`,
+  const t=[`Hi ${b.name.split(' ')[0]},`,'',`Good news: your EZ CUSTOMZ quote is approved!`,'',...(b.note?['A note from EZ CUSTOMZ:',b.note,'']:[]),...(v?[`Vehicle: ${v}`]:[]),`Service: ${b.service}`,`Appointment date: ${fmtD(b.slot_date)}`,'Shop address: 2138 Wooddale Blvd, Baton Rouge, LA',
     `Estimated total: ${usd(b.estimate_cents)}`,`Deposit to lock in your date: ${usd(b.deposit_cents)} (comes out of your total)`,'',
     `Pay your deposit securely here (you'll review our Deposit & Payment Terms first):`,l,'',
-    `We're holding your date until ${fmtT(b.hold_until)} Central. After that it may be offered to someone else.`,'','Questions? Call or text 225.615.4554.','EZ CUSTOMZ, Baton Rouge, Louisiana'].join('\n');
+    `We're holding your date until ${fmtT(b.hold_until)} Central. After that it may be offered to someone else.`,'','Questions? Call or text 225.615.4554.','EZ CUSTOMZ, 2138 Wooddale Blvd, Baton Rouge, LA'].join('\n');
   try{const r=await fetch(FORMSUBMIT,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
       body:JSON.stringify({_subject:`Deposit link sent: ${b.name}, ${fmtD(b.slot_date)}`,_template:'table',_captcha:'false',name:b.name,email:b.email,
         Deposit:usd(b.deposit_cents),'Estimated total':usd(b.estimate_cents),'Pay link':l,'Held until':fmtT(b.hold_until)+' Central',_autoresponse:t})});
@@ -380,7 +381,7 @@ $('list').onsubmit=e=>{e.preventDefault();const f=e.target,F=f.elements,id=f.dat
     if(!(est>=100&&est<=1e7))return $('am').textContent=ERR.bad_estimate;
     if(!(dep>=100&&dep<=est))return $('am').textContent=ERR.bad_deposit;
     return (async()=>{btn.disabled=true;let r,err='',note='';
-      try{r=await rpc('admin_send_deposit_link',{p_id:id,p_estimate_cents:est,p_deposit_cents:dep,p_hold_hours:+F.h.value})}catch(x){err=x.message}
+      try{await rpc('admin_set_dropoff',{p_id:id,p_time:F.t.value});r=await rpc('admin_send_deposit_link',{p_id:id,p_estimate_cents:est,p_deposit_cents:dep,p_hold_hours:+F.h.value})}catch(x){err=x.message}
       if(err){btn.disabled=false;$('am').textContent=err;return}
       if(F.m.checked){const b={...RB[id],estimate_cents:est,deposit_cents:dep,pay_token:r.pay_token,hold_until:r.hold_until,note:F.n.value.trim()};btn.textContent='Emailing the customer…';
         const m=await mailLink(b);note=m===true?`Deposit link emailed to ${b.email}.`:`Saved, but the email didn't go through (${m}). Use Copy link, Text it or Email it below.`}
