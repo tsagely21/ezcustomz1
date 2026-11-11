@@ -23,7 +23,7 @@ Supabase project `umvdxjnhzehcoujrishh`. Base tables, `bookings` RPCs and `is_ad
 
 ## Materials — `materials.sql`
 - `materials` rows per item per job (`ordered_at` null = to order, `auto` = from quote). `bookings_materials` trigger adds parts when `pay_status` becomes `paid` (wrapped so it can never block the webhook).
-- `materials_for(service, selections)` maps quote options -> items: starlight kit by star count (skipped if "Customer supplies kit"), Suede wrap, Shooting star kit, Sunroof LED strips (standard/panoramic), Ambient lighting kit, "Speaker rack: <style>" / "Speaker box: <placement>", Custom logo. Update it when quote option wording changes.
+- `materials_for(service, selections)` maps quote options -> items: starlight kit by star count (skipped if "Customer supplies kit"), Suede wrap, Shooting star kit, Suede sunvisors, Sunroof LED strips (standard/panoramic), Ambient lighting kit, "Speaker rack: <style>" / "Speaker box: <placement>", Custom logo. Update it when quote option wording changes.
 
 ## Telegram bot — `telegram.sql`, `functions/telegram-bot`, `supabase/TELEGRAM_SETUP.md`
 - @ezcustomz_bot. Insert trigger (`pg_net`) pings the function once per booking (`tg_notified_at`). Buttons: Send link (form's estimate/deposit, 48 h hold, `admin_send_deposit_link` + `send-deposit-link` email) / Change price (reply `1200 300`) / Decline; `/pending` re-lists; `/id` shows ids.

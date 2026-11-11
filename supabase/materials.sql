@@ -23,6 +23,7 @@ returns table (item text) language sql immutable set search_path = public as $$
     (case when p_sel !~ 'Customer supplies kit' then substring(p_sel from '(?:^|\n)Starlights: (\d+) stars') || ' starlight kit' end),
     (case when substring(p_sel from '(?:^|\n)Upgrades: ([^\n]*)') ilike '%suede wrap%' then 'Suede wrap' end),
     (case when substring(p_sel from '(?:^|\n)Upgrades: ([^\n]*)') ilike '%shooting stars%' then 'Shooting star kit' end),
+    (case when substring(p_sel from '(?:^|\n)Upgrades: ([^\n]*)') ilike '%suede sunvisors%' then 'Suede sunvisors' end),
     (case when p_sel ~ '(^|\n)Standard sunroof with LED strips' then 'Sunroof LED strips (standard)'
           when p_sel ~ '(^|\n)Panoramic sunroof with LED strips' then 'Sunroof LED strips (panoramic)' end),
     (case when coalesce(p_service, '') ilike '%ambient lighting%' then 'Ambient lighting kit' end),
