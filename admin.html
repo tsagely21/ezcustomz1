@@ -356,7 +356,7 @@ async function load(){
     <article class="card">
       <div class="top"><div class="when">${esc(fmtD(b.slot_date))}</div><span class="tag ${tc}">${esc(tt)}</span></div>
       <dl><dt>Submitted</dt><dd>${esc(fmtT(b.created_at))} Central</dd><dt>Name</dt><dd>${esc(b.name)}</dd><dt>Phone</dt><dd><a href="tel:${esc(b.phone)}" style="color:inherit">${esc(b.phone)}</a></dd>
-      <dt>Email</dt><dd><a href="mailto:${esc(b.email)}" style="color:inherit">${esc(b.email)}</a></dd>${v?`<dt>Vehicle</dt><dd>${esc(v)}</dd>`:''}<dt>Service</dt><dd>${esc(b.service)}</dd></dl>
+      <dt>Email</dt><dd><a href="mailto:${esc(b.email)}" style="color:inherit">${esc(b.email)}</a></dd>${v?`<dt>Vehicle</dt><dd>${esc(v)}</dd>`:''}<dt>Service</dt><dd>${esc(b.service)}</dd>${/^Two tone: /m.test(b.selections||'')?'<dt>Two tone</dt><dd><b>Yes</b> ($1 per star)</dd>':''}</dl>
       ${b.pay_status==='conflict'?`<div class="alert">Deposit paid, but the booking could not be confirmed: ${esc(b.pay_note||'')} Reschedule it below, or refund it in the Stripe Dashboard and decline.</div>`:''}
       ${money(b)}
       ${b.status==='pending'&&b.pay_status==='none'?`<pre>${esc(b.selections)}</pre>`:`<details><summary>Quote request details</summary><pre>${esc(b.selections)}</pre></details>`}

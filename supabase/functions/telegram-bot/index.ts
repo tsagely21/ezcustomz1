@@ -55,7 +55,7 @@ async function booking(id: string, claim = false) {
 }
 
 const who = (b: any) => { const veh = (String(b.selections ?? '').match(/^Vehicle: (.*)$/m) ?? [])[1];
-  return [`<b>${esc(b.name)}</b>`, `📅 ${esc(day(b.slot_date))}`, ...(veh ? [`🚗 ${esc(veh)}`] : []), `🛠 ${esc(b.service)}`, `📞 ${esc(b.phone)}`, `✉️ ${esc(b.email)}`].join('\n'); };
+  return [`<b>${esc(b.name)}</b>`, `📅 ${esc(day(b.slot_date))}`, ...(veh ? [`🚗 ${esc(veh)}`] : []), `🛠 ${esc(b.service)}`, ...(/^Two tone: /m.test(String(b.selections ?? '')) ? ['🎨 <b>Two tone</b> ($1 per star)'] : []), `📞 ${esc(b.phone)}`, `✉️ ${esc(b.email)}`].join('\n'); };
 // The quote card. est/dep default to what the customer's form calculated.
 function card(b: any, est: number | null, dep: number | null, title = '🆕 <b>New quote request</b>') {
   const text = [title, '', who(b), '', `<blockquote expandable>${esc(b.selections)}</blockquote>`, '',
